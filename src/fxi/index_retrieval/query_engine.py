@@ -190,13 +190,33 @@ class QueryEngine:
 
         # 3. FTS5 原著场景切片检索
         search_terms = " ".join(decomp.keywords or decomp.target_entities)
-        scenes_data = self.fts.search(query=search_terms, work_id=work_id, limit=top_k_scenes)
+        raw_scenes = self.fts.search(query=search_terms, work_id=work_id, limit=top_k_scenes)
+        scenes_data = []
+        for sc in raw_scenes:
+            scene_uuid = sc["scene_uuid"]
+            scene_path = self.config.sources_dir / work_id / "scenes" / f"{scene_uuid}.md"
+            scene_text = ""
+            if scene_path.is_file():
+                try:
+                    full_text = scene_path.read_text(encoding="utf-8").strip()
+                    scene_text = full_text[:1000] + ("..." if len(full_text) > 1000 else "")
+                except Exception:
+                    pass
+
+            scenes_data.append({
+                "scene_uuid": scene_uuid,
+                "work_id": sc["work_id"],
+                "chapter_index": sc.get("chapter_index", 0),
+                "snippet": sc["snippet"],
+                "content": scene_text or sc["snippet"]
+            })
 
         return {
             "entities": entities_data,
             "events": events_data,
             "scenes": scenes_data
         }
+
 
     def synthesize_answer(
         self,
@@ -230,8 +250,10 @@ class QueryEngine:
         # 格式化场景片段
         scenes_lines = []
         for sc in evidence.get("scenes", []):
-            scenes_lines.append(f"- [场景 {sc['scene_uuid']}]: {sc['snippet']}")
+            text = sc.get("content") or sc.get("snippet", "")
+            scenes_lines.append(f"- [场景 {sc['scene_uuid']} (第{sc.get('chapter_index', '?')}章)]: {text}")
         scenes_context = "\n".join(scenes_lines) or "（未匹配到原著场景高亮片段）"
+
 
         if use_mock:
             ans_parts = [f"针对关于《{work_id}》的问题：“{question}”：\n"]
