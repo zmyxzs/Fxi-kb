@@ -89,3 +89,31 @@ def import_source(
     console.print(f"  • 总字数: {manifest.total_chars}")
     console.print(f"  • 场景切片数: {manifest.total_scenes}")
     console.print(f"  • 底本哈希: {manifest.sha256[:12]}...")
+
+
+@app.command("extract")
+def extract_work(
+    work_id: str = typer.Argument(..., help="需要自动解析入库的作品 ID"),
+    chapters: int = typer.Option(20, "--chapters", "-n", help="分析的前 N 章"),
+):
+    """使用配置的大模型自动解析作品要素、人物相态与同人分歧点 (POD)"""
+    from fxi.sources.auto_extractor import UniversalAutoExtractor
+    console.print(f"[cyan]正在启动大模型通用要素抽取器分析作品 [{work_id}] (前 {chapters} 章)...[/cyan]")
+    extractor = UniversalAutoExtractor()
+    try:
+        report = extractor.extract_and_ingest(work_id=work_id, sample_chapters=chapters)
+    except Exception as e:
+        console.print(f"[bold red]抽取失败: {e}[/bold red]")
+        raise typer.Exit(code=1)
+
+    console.print(f"[bold green]✔ 成功完成通用解析与知识库入库！[/bold green]")
+    console.print(f"  • 作品: {report['title']} ({report['work_id']})")
+    console.print(f"  • 角色数: {len(report['characters'])}")
+    for c in report['characters']:
+        phases_str = ", ".join(c['phases']) if c['phases'] else "单阶段"
+        console.print(f"    - [cyan]{c['name']}[/cyan] (相态: {phases_str})")
+    console.print(f"  • 道具数: {len(report['items'])}")
+    console.print(f"  • 因果事件数: {len(report['causal_events'])}")
+    for ev in report['causal_events']:
+        pod_mark = f" [bold magenta]🌟 同人分歧点 (POD): {ev['pod_analysis']}[/bold magenta]" if ev['is_pod'] else ""
+        console.print(f"    - Order {ev['order']}: {ev['summary']}{pod_mark}")
