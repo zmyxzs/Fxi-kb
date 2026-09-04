@@ -36,11 +36,20 @@ class TaskRouter:
         model = route.get("model", "deepseek-chat")
         temperature = float(route.get("temperature", 0.2))
 
-        # 默认使用 OpenAICompatible
-        provider_name = route.get("provider", "openai_compatible")
+        # 默认使用配置中的 default_provider 或 openai_compatible
+        provider_name = route.get("provider", self._cfg.get("default_provider", "openai_compatible"))
         providers_cfg = self._cfg.get("providers", {}).get(provider_name, {})
         base_url = providers_cfg.get("base_url", "https://api.deepseek.com/v1")
         key_env = providers_cfg.get("api_key_env", "DEEPSEEK_API_KEY")
+        api_key = providers_cfg.get("api_key")
+        reasoning_effort = route.get("reasoning_effort", providers_cfg.get("reasoning_effort"))
+        timeout = float(route.get("timeout", providers_cfg.get("timeout", 180.0)))
 
-        provider = OpenAICompatibleProvider(base_url=base_url, api_key_env=key_env)
+        provider = OpenAICompatibleProvider(
+            base_url=base_url,
+            api_key_env=key_env,
+            api_key=api_key,
+            reasoning_effort=reasoning_effort,
+            timeout=timeout,
+        )
         return provider, model, temperature

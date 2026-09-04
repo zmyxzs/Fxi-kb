@@ -59,3 +59,33 @@ def list_entities(work_id: str, category: str = typer.Option(None, "--category",
         )
 
     console.print(table)
+
+
+@app.command("import")
+def import_source(
+    path: str = typer.Argument(..., help="章节文件目录或单文件路径"),
+    work_id: str = typer.Option(..., "--work-id", "-w", help="作品 ID，如 zhanshen"),
+    title: str = typer.Option(..., "--title", "-t", help="作品标题，如 我在精神病院学斩神"),
+    limit: int = typer.Option(None, "--limit", "-n", help="最大导入章节数，如 20")
+):
+    """导入原著章节目录或底本，切分场景并建立 FTS5 全文索引"""
+    from pathlib import Path
+    from fxi.sources.importer import SourceImporter
+
+    importer = SourceImporter()
+    p = Path(path)
+    if not p.exists():
+        console.print(f"[bold red]错误：路径不存在: {path}[/bold red]")
+        raise typer.Exit(code=1)
+
+    console.print(f"[cyan]开始导入原著: {title} (ID: {work_id})...[/cyan]")
+    if p.is_dir():
+        manifest = importer.import_chapters_dir(p, source_id=work_id, title=title, max_chapters=limit)
+    else:
+        manifest = importer.import_file(p, source_id=work_id, title=title)
+
+    console.print(f"[bold green]✔ 导入成功！[/bold green]")
+    console.print(f"  • 章节数: {manifest.total_chapters}")
+    console.print(f"  • 总字数: {manifest.total_chars}")
+    console.print(f"  • 场景切片数: {manifest.total_scenes}")
+    console.print(f"  • 底本哈希: {manifest.sha256[:12]}...")

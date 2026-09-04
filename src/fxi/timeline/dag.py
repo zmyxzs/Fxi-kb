@@ -28,7 +28,9 @@ class CausalDAG:
         status: str = "untouched"
     ) -> None:
         """注册因果图节点"""
+        from fxi.storage.sqlite_client import ensure_work
         with self.db_client.transaction() as cur:
+            ensure_work(cur, work_id)
             cur.execute(
                 """
                 INSERT OR REPLACE INTO causal_events
@@ -56,7 +58,9 @@ class CausalDAG:
         link_type: str = "direct_cause"
     ) -> None:
         """注册有向因果依赖边: cause -> effect"""
+        from fxi.storage.sqlite_client import ensure_work
         with self.db_client.transaction() as cur:
+            ensure_work(cur, work_id)
             cur.execute(
                 """
                 INSERT INTO causal_links

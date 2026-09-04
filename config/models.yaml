@@ -1,6 +1,13 @@
-default_provider: "openai_compatible"
+default_provider: "luna_local"
 
 providers:
+  luna_local:
+    base_url: "http://localhost:51109/v1"
+    api_key: "agt_codex_YT8KLTda0AinwT91XgwO8tIZ9MiHnsfb"
+    api_key_env: "LUNA_API_KEY"
+    default_model: "gpt-5.6-luna"
+    reasoning_model: "gpt-5.6-luna"
+    reasoning_effort: "low"
   openai_compatible:
     base_url: "https://api.deepseek.com/v1"
     api_key_env: "DEEPSEEK_API_KEY"
@@ -13,18 +20,22 @@ providers:
 
 task_routes:
   fast_extraction:
-    provider: "openai_compatible"
-    model: "deepseek-chat"
+    provider: "luna_local"
+    model: "5.6-Luna"
+    reasoning_effort: "low"
     temperature: 0.1
   structured_repair:
-    provider: "openai_compatible"
-    model: "deepseek-chat"
+    provider: "luna_local"
+    model: "5.6-Luna"
+    reasoning_effort: "low"
     temperature: 0.0
   deep_reasoning_ooc:
-    provider: "openai_compatible"
-    model: "deepseek-reasoner"
+    provider: "luna_local"
+    model: "5.6-Luna"
+    reasoning_effort: "medium"
     temperature: 0.2
   ripple_analysis:
-    provider: "openai_compatible"
-    model: "deepseek-chat"
+    provider: "luna_local"
+    model: "5.6-Luna"
+    reasoning_effort: "medium"
     temperature: 0.3
