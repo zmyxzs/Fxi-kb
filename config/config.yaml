@@ -1,0 +1,18 @@
+server:
+  host: "127.0.0.1"
+  port: 8765
+
+storage:
+  data_dir: "data"
+  projects_dir: "projects"
+  skills_dir: "skills"
+  sources_dir: "sources"
+  materials_dir: "materials"
+  sqlite_path: "data/manifest.sqlite"
+  cache_db_path: "data/cache.sqlite"
+  jieba_custom_dict_path: "data/project_lexicon.txt"
+
+context:
+  default_budget: 3500
+  max_budget: 4000
+  vram_safe_limit_mb: 2048
