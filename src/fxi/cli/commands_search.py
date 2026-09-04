@@ -62,3 +62,29 @@ def check_ripple(work_id: str, canon_work_id: str, canon_event_id: str):
         console.print("[bold magenta]重构推演建议:[/bold magenta]")
         for s in suggestions:
             console.print(f"  • {s}")
+
+
+@app.command("ask")
+def ask_question(
+    question: str,
+    work_id: str = typer.Option(..., "--work-id", "-w", help="作品标识，如 zhanshen"),
+    scenes: int = typer.Option(5, "--scenes", "-s", help="匹配原著场景切片上限")
+):
+    """【智能自然语言问答】：自动拆解实体与关键词，聚合多源证据给出权威回答"""
+    from fxi.index_retrieval.query_engine import QueryEngine
+
+    console.print(f"[bold cyan]正在解析并检索知识库...[/bold cyan]")
+    engine = QueryEngine()
+    res = engine.ask(work_id=work_id, question=question, top_k_scenes=scenes)
+
+    # 显示拆解出的证据线索
+    console.print(f"\n[bold yellow]🔍 意图与检索词拆解:[/bold yellow]")
+    console.print(f"- 关联实体: {res.decomposition.target_entities}")
+    console.print(f"- 搜索关键词: {res.decomposition.keywords}")
+    console.print(f"- 命中因果事件数: {len(res.evidence.get('events', []))}")
+    console.print(f"- 命中原著场景数: {len(res.evidence.get('scenes', []))}")
+
+    # 显示回答
+    console.print(f"\n[bold green]💡 知识库回答:[/bold green]")
+    console.print(res.answer)
+

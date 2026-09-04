@@ -118,3 +118,33 @@ def test_model_gateway_and_cache(temp_workspace: FxiConfig):
     # 审计记录已落盘
     summary = gw.tracker.get_summary()
     assert summary["total_calls"] >= 1
+
+
+def test_query_engine_and_ask_endpoint(temp_workspace: FxiConfig):
+    """测试自然语言智能问答 QueryEngine 与 /v1/query/ask 端点"""
+    from fxi.index_retrieval.query_engine import QueryEngine
+    from fxi.domain.entities import EntityManager
+
+    em = EntityManager(temp_workspace)
+    em.upsert_entity("test_work", "char_hero", name="林七夜", category="character")
+
+
+    # 1. QueryEngine direct test
+    engine = QueryEngine(temp_workspace)
+    res = engine.ask(work_id="test_work", question="林七夜的武器是什么", use_mock=True)
+    assert res.work_id == "test_work"
+    assert "林七夜" in res.decomposition.target_entities
+    assert "针对关于《test_work》的问题" in res.answer
+
+    # 2. FastAPI endpoint test
+    app = create_app(temp_workspace)
+    client = TestClient(app)
+    res_api = client.post("/v1/query/ask", json={
+        "work_id": "test_work",
+        "question": "林七夜的身份是什么"
+    })
+    assert res_api.status_code == 200
+    data = res_api.json()
+    assert data["work_id"] == "test_work"
+    assert "林七夜" in data["target_entities"]
+

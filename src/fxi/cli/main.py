@@ -23,9 +23,13 @@ app.command("rebuild")(ops_app.registered_commands[0].callback)
 app.command("search")(search_app.registered_commands[0].callback)
 app.command("state")(search_app.registered_commands[1].callback)
 app.command("ripple")(search_app.registered_commands[2].callback)
+for _cmd in search_app.registered_commands:
+    if _cmd.name == "ask":
+        app.command(_cmd.name)(_cmd.callback)
 for _cmd in project_app.registered_commands:
     if _cmd.name in ("import", "extract"):
         app.command(_cmd.name)(_cmd.callback)
+
 
 
 if __name__ == "__main__":

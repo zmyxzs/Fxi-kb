@@ -82,3 +82,19 @@ class OOCCheckRequest(BaseModel):
 class OOCCheckResponse(BaseModel):
     has_violations: bool
     violations: list[dict[str, Any]]
+
+
+class AskQueryRequest(BaseModel):
+    work_id: str
+    question: str
+    top_k_scenes: int = Field(default=5, ge=1, le=20)
+
+
+class AskQueryResponse(BaseModel):
+    work_id: str
+    question: str
+    target_entities: list[str]
+    keywords: list[str]
+    answer: str
+    evidence: dict[str, Any]
+

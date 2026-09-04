@@ -10,6 +10,8 @@ from fxi.api.contracts import (
     ContextAssembleResponse,
     OOCCheckRequest,
     OOCCheckResponse,
+    AskQueryRequest,
+    AskQueryResponse,
     RippleQueryRequest,
     RippleQueryResponse,
     StateQueryRequest,
@@ -19,6 +21,8 @@ from fxi.character_knowledge.ooc_checker import OOCChecker
 from fxi.core.config import load_config
 from fxi.core.types import CausalStatus
 from fxi.index_retrieval.context_pruner import ContextPruner
+from fxi.index_retrieval.query_engine import QueryEngine
+
 from fxi.state_ledger.calculator import LedgerCalculator
 from fxi.timeline.ripple_analyzer import RippleAnalyzer
 
@@ -134,3 +138,20 @@ def check_ooc(req: OOCCheckRequest, request: Request):
             for v in violations
         ]
     )
+
+
+@router.post("/query/ask", response_model=AskQueryResponse)
+def ask_question(req: AskQueryRequest, request: Request):
+    """【智能自然语言问答接口】：接收问题，自动拆词、多源检索证据并综合回答"""
+    config = getattr(request.app.state, "config", None) or load_config()
+    engine = QueryEngine(config)
+    res = engine.ask(work_id=req.work_id, question=req.question, top_k_scenes=req.top_k_scenes)
+    return AskQueryResponse(
+        work_id=res.work_id,
+        question=res.question,
+        target_entities=res.decomposition.target_entities,
+        keywords=res.decomposition.keywords,
+        answer=res.answer,
+        evidence=res.evidence
+    )
+
