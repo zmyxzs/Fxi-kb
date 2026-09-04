@@ -44,8 +44,12 @@ PROMPT_QUERY_DECOMPOSE = """分析用户针对小说作品提出的自然语言�
 }}
 ```"""
 
-PROMPT_SYNTHESIZE_ANSWER = """你是一个严谨的小说世界观与剧情知识库分析专家。请根据下方提供的多源检索证据，针对用户提出的问题进行全面、准确、有据可查的回答。
-严禁凭空臆测，严禁使用未在证据中出现的设定。回答时请具体注明出处（如涉及的角色档案、因果事件ID、原著章节/场景片段）。
+PROMPT_SYNTHESIZE_ANSWER = """你是一个严谨的小说世界观与剧情知识库分析专家。请严格根据下方提供的多源检索证据，针对用户提出的问题进行全面、准确、有据可查的回答。
+
+【回答规范】
+1. 严禁凭空臆测，严禁使用未在证据中出现的设定。
+2. 高信息密度，拒绝套话：直接给出核心事实、关键论据、人物动机与逻辑关系，严禁输出任何“作为知名小说主角”、“在网络文学中”等空洞宏观车轱辘话。
+3. 严格注明出处：引用事实时请标明对应的角色档案、因果事件ID、原著章节或场景片段。
 
 【用户问题】
 {question}
@@ -60,7 +64,8 @@ PROMPT_SYNTHESIZE_ANSWER = """你是一个严谨的小说世界观与剧情知�
 === 原著场景片段 (FTS5) ===
 {scenes_context}
 
-请直接输出结构化、清晰详实的回答。"""
+请直接输出结构化、清晰、事实密度极高的权威回答："""
+
 
 
 class QueryEngine:
@@ -73,10 +78,16 @@ class QueryEngine:
         self.db_client = DatabaseClient(self.config.sqlite_path)
 
     def decompose_query(self, work_id: str, question: str, use_mock: bool = False) -> QueryDecomposition:
-        """解析并拆解自然语言提问"""
-        if use_mock:
-            return self._heuristic_decompose(work_id, question)
+        """解析并拆解自然语言提问（优先毫秒级快速分流，未命中再调大模型）"""
+        # 1. 优先本地毫秒级快查 (Fast-Path)：若问题中已明确出现库内实体名，直接返回，立省 6 秒
+        fast_decomp = self._heuristic_decompose(work_id, question)
+        if fast_decomp.target_entities and fast_decomp.target_entities != ["主角"]:
+            return fast_decomp
 
+        if use_mock:
+            return fast_decomp
+
+        # 2. 未直接命中库内实体名时，由模型深度推断潜在指代 (如 '那个盲眼少年是谁')
         try:
             prompt = PROMPT_QUERY_DECOMPOSE.format(work_id=work_id, question=question)
             decomp = self.gateway.complete(
@@ -91,7 +102,8 @@ class QueryEngine:
         except Exception:
             pass
 
-        return self._heuristic_decompose(work_id, question)
+        return fast_decomp
+
 
     def _heuristic_decompose(self, work_id: str, question: str) -> QueryDecomposition:
         """基于已知实体名与 jieba 分词的确定性保底拆解"""
