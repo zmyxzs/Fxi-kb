@@ -2,13 +2,17 @@
 
 这是知识库规划与技术架构的统一入口。本文档维护全局索引、系统核心原则与阅读导航。详细规划按“它是什么、用于什么、如何关联、如何演进”进行彻底的问题域解耦。
 
+> **现实校准入口**：本目录的 `00`～`15` 主要描述目标模型、设计原则和演进方案。要判断某项能力当前是否真正可用、需要哪些数据前置条件，以及哪些设计尚未落地，请优先阅读 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md)，并结合 [dev-docs/08-current-implementation-and-operations.md](../../dev-docs/08-current-implementation-and-operations.md)。当设计蓝图与代码行为不一致时，以当前实现文档、代码和实际验证结果为准。
+
+> **禁止误读**：下方“核心设计总原则”和专题中的“支持/必须”是目标约束，不是功能已上线的证明。当前 embedding、向量/RRF、离线队列、自动 failover、rollback approval 和任意全量 rebuild 均以“未实现/条件可用”处理。
+
 ---
 
 ## 核心设计总原则（必读）
 
 1. **纯文本优先与单真理源（Text-First Single Source of Truth）**：
    - 核心设定、人物卡、事件、草稿和素材一律以本地 Markdown + YAML Frontmatter 纯文本形式持久化；
-   - SQLite、FTS5 中文全文表、向量索引均属于**衍生派生数据（可随时丢弃并一键全量重建）**，确保 5~10 年长期资产零锁定、零丢失。
+   - SQLite、FTS5 中文全文表、向量索引属于**目标上的衍生数据**；当前含动态账本、角色认知、连续性和 v2 审计表的数据库不能无条件丢弃，重建遇到不可回放投影会 fail closed。
 2. **状态与对象解耦**：
    - 人物、物品、能力、关系、事件和对话是故事世界中的**实体对象**；
    - 事实、猜测、谎言、误解、AI 判断和 AU 设定是这些对象的**认识论状态**。
@@ -28,14 +32,14 @@
    - 拒绝全书全量抽取；采用“按需惰性抽取”；
    - 提议自动分流：低风险原文引用自动标记 `auto_accepted`，高危冲突/设定提交人工审核。
 9. **中文检索零暗礁**：
-   - FTS5 配合应用层 jieba 分词，实体真名与宗门法宝自动导出为**项目专有分词词典（Project Lexicon）**。
+   - FTS5 配合应用层 jieba 分词，实体名称与物品名称自动导出为**项目专有分词词典（Project Lexicon）**。
 10. **本地硬件守护与 Token 预算（RTX 2060 6GB）**：
-    - 本地严守 6GB 显存红线，仅常驻 0.6B Embedding（~1.5GB），抽取与生成走超低成本云端 API；单次检索控制在 2500~4000 tokens 黄金预算。
+   - 本地严守 6GB 显存红线；Embedding 常驻属于规划项，当前检索以 FTS 为准，单次检索控制在 2500~4000 tokens 黄金预算。
 11. **四级生命周期语义**：
     - 严禁单点物理删除；区分 `exclude`（排除）、`disable`（停用/归档）、`supersede`（替代）与 `purge`（受控物理清理）。
 12. **统一大模型网关与系统边界解耦**：
     - 知识库（Fxi）专注世界观事实、时空因果与状态记账，正文小说生成属于外部项目；
-    - 知识库内部的抽取、审查与向量化统一收敛于 `model-gateway`，支持任务分级路由、JSON 容错修复、哈希调用缓存与提示词外部化，杜绝散落编写 SDK 请求。
+    - 知识库内部的抽取与审查统一收敛于 `model-gateway`；任务分级路由、JSON 容错修复和哈希缓存已作为当前边界，向量化、离线队列、自动 failover 与提示词外置仍需后续落地。
 
 ---
 
@@ -63,11 +67,15 @@
 | **14** | [14-future-scenarios-compatibility-and-evolution.md](14-future-scenarios-compatibility-and-evolution.md) | **后期场景与演进**：金币战力动态账本、风格评测回滚、四级删除生命周期与向后兼容 | `state-ledger`, `lifecycle` |
 | **14a** | [14a-api-extension-notes.md](14a-api-extension-notes.md) | **API 扩展备忘**：动态状态账本、风格反馈、生命周期影响分析扩展接口规范 | `api-cli` |
 | **15** | [15-model-management-and-llm-gateway.md](15-model-management-and-llm-gateway.md) | **大模型统一网关**：Provider 抽象、任务分级路由、JSON 容错修复、调用哈希缓存与成本记账 | `model-gateway` |
+| **16** | [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) | **当前实现校准**：真实可用能力、依赖前置、设计与代码冲突、不可用功能、验收和故障边界 | 全局实现 |
 
 ---
 
 ## 推荐阅读与实现顺序
 
+0. **先读现实校准（避免把设计当成现状）**
+   - 读 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) 了解当前代码的真实边界；
+   - 需要启动、认证、CLI/API、备份和重建细节时，继续读 [dev-docs/08-current-implementation-and-operations.md](../../dev-docs/08-current-implementation-and-operations.md)。
 1. **第一步：通读总纲与边界（建立全局观）**
    - 先读 [00-canonical-architecture.md](00-canonical-architecture.md) 了解最高原则与模块拓扑；
    - 读 [01-scope.md](01-scope.md) 确认当前自用边界与非目标。
@@ -91,4 +99,5 @@
 - 涉及**数据权威层级、写入流控、核心概念定义**时，必须严格遵守 `00`，修改需同步 `00`；
 - 涉及**具体模块的功能扩展**时，修改对应专题文件，并在 `13` 中检查模块依赖是否发生变更；
 - 任何新增状态、接口或实体类型，必须向后兼容并登记在 `14` 与 `14a`；
+- 设计变更完成后，必须同步检查 `16` 与 `dev-docs/08`，明确标注“已实现”“条件可用”“仅规划”或“不可用”，不能只更新蓝图；
 - `README.md` 与旧入口 `../knowledge-base-plan.md` 仅维护索引和导读，严禁在入口复制专题正文。

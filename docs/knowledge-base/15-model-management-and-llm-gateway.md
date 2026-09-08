@@ -1,4 +1,6 @@
-# 15 模型管理与统一大模型网关（Model Gateway）
+# 15 模型管理与统一大模型网关（Model Gateway，目标设计）
+
+> 当前实现已提供统一 chat gateway、缓存、结构化修复、多密钥轮换，以及受鉴权的 `/v1/models/health`、`/v1/models/chat` 外部代理；embedding provider、离线队列、跨 provider 自动 failover 和提示词注册表仍属于演进目标，实际状态以 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) 为准。
 
 ## 1. 架构定位与职责边界
 
@@ -7,7 +9,7 @@
 - **外部写作项目（如 `novel-Skill` 或作者写作客户端）**：负责正文构思、大纲推演、行文起草、角色对话扩写以及调用大模型生成正文小说。这是**独立的外部消费端**。
 - **当前系统（`Fxi`）是纯粹的知识库（Knowledge Base）**：负责为外部写作项目提供客观、可靠、经过验证的世界观事实、时空因果、动态状态账本、防 OOC 边界与素材检索支撑。
 
-### 1.2 知识库内部为何必须需要“模型管理网关”
+### 1.2 为何必须统一管理模型调用
 虽然知识库不负责“写小说”，但知识库内部有大量需要利用大模型能力的**数据理解、归纳与审查管道**：
 1. **原始资料抽取（`claims`）**：从导入的 txt/md 原著或历史草稿中抽取实体、属性、事件与因果；
 2. **逻辑与防 OOC 审核（`character-knowledge`）**：深度审查时间线一致性、角色知情区间与合法性；
@@ -17,7 +19,7 @@
 
 如果缺乏统一的模型管理层，知识库的每个模块都会重复手写 HTTP 请求、重试、超时、密钥读取、Token 统计与 JSON 解析代码。一旦某个 API 供应商限流、下线或推出更便宜的新模型，全库代码都必须推倒翻改。
 
-**统一大模型网关（`model-gateway`）的目标**：作为知识库内部的基础设施服务，提供“配置驱动、任务分级路由、自动容错重试、结构化修复与缓存记账”的统一调用管道。业务模块仅需一行代码调用 `gateway.complete(task="extraction", ...)`，底层细节完全透明。
+**统一大模型网关（`model-gateway`）的目标**：作为 Fxi 拥有的基础设施服务，提供“配置驱动、任务分级路由、密钥轮换与冷却、结构化修复与缓存记账”的统一调用管道。Fxi 内部模块直接调用 Python 门面；受鉴权的外部客户端通过 REST 模型代理复用同一个进程内网关，不再各自复制 provider 请求和密钥状态。
 
 ---
 
@@ -58,16 +60,32 @@
 ```yaml
 # config/models.yaml - 知识库模型路由配置
 providers:
+  agnes:
+    adapter: openai_compatible
+    base_url: "https://apihub.agnes-ai.com/v1"
+    api_key_envs:
+      - "AGNES_API_KEY"
+      - "AGNES_API_KEY_2"
+      - "AGNES_API_KEY_3"
+    rotate_on_each_call: true
+    key_cooldown_seconds: 60
+    default_model: "agnes-3.0-flash"
+
   deepseek:
-    type: openai_compatible
+    adapter: openai_compatible
     base_url: "https://api.deepseek.com/v1"
     api_key_env: "DEEPSEEK_API_KEY"
     timeout_seconds: 60
     max_retries: 3
 
   gemini:
-    type: google_genai
-    api_key_env: "GEMINI_API_KEY"
+    adapter: google_genai
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+    api_key_envs:
+      - "GEMINI_API_KEY"
+      - "GEMINI_API_KEY_2"
+    rotate_on_each_call: true
+    key_cooldown_seconds: 60
     timeout_seconds: 45
     max_retries: 3
 
@@ -126,6 +144,17 @@ task_routing:
       provider: local_gpu
       model: "Qwen3-Embedding-0.6B"
 ```
+
+### 3.1 多密钥轮换与限流边界
+
+- `api_key_env` 保留单密钥兼容；需要密钥池时使用有序的 `api_key_envs`。YAML 只保存环境变量名，真实密钥继续放在工作区 `.env` 或进程环境中。
+- `rotate_on_each_call: true` 表示每次新的模型调用都推进一次 round-robin，不需要等到出现 RPM 错误才换 key；设为 `false` 时正常调用固定使用第一个可用 key。
+- 无论开关状态，某个 key 收到 401、403 或 429 后都会进入 `key_cooldown_seconds` 冷却，并立即尝试尚未使用的备用 key；所有 key 都不可用时显式失败，不会无限重试或伪造成功。
+- 未设置的环境变量会被跳过；多个环境变量若指向同一个密钥值，只计作一个候选，避免通过重复配置绕过冷却。
+- 轮询游标属于当前 workspace 的 `TaskRouter`，线程内并发安全；多个独立进程不会共享游标或冷却状态，如需跨进程全局配额协调应另设集中式限流器。
+- Gemini API 的 RPM/TPM/每日配额按 Google Cloud 项目计算，而不是按 API key 计算。同一项目下增加多个 Gemini key 只能提供凭据轮换与故障容错，不能提升项目总配额；只有具有独立合法配额范围的项目凭据才可能分散请求。
+
+这里的自动切换是同一 provider 内的密钥级 failover；跨 provider 的主备切换与离线队列仍是独立能力，不能混为已实现功能。
 
 ---
 
@@ -216,16 +245,18 @@ prompts/
 |---|---|---|
 | **jieba + FTS5 全文搜索** | 本地 CPU 处理（<10ms） | **100% 满血可用**（本地纯计算） |
 | **动态状态账本重算** | 本地 CPU 处理（<5ms） | **100% 满血可用**（本地纯计算） |
-| **向量检索与语义切片** | 本地 RTX 2060 GPU 加速 | **100% 满血可用**（Qwen3-Embedding 本地驻留） |
+| **向量检索与语义切片** | 本地 RTX 2060 GPU 加速（规划） | **当前不可用**：尚无 embedding adapter、向量存储或 RRF 链路 |
 | **角色认知与 OOC 静态检查** | 基于本地 DAG 区间校验 | **100% 满血可用**（规则引擎纯本地） |
-| **大模型深度抽取与摘要** | 正常调用云端 API | **自动排队进 `offline_tasks.queue`**，本地提示“网络不可用，已暂存待办”，恢复后后台静默补全 |
+| **大模型深度抽取与摘要** | 正常调用云端 API | **当前失败可见**：尚无 `offline_tasks.queue`，断网/服务失败需保留诊断并由调用方重试 |
 
 ---
 
 ## 8. 与外部写作系统（novel-Skill）的交互契约
 
-外部写作端与知识库交互时，**知识库的 Model Gateway 仅用于满足知识库自身的分析与检视需求**：
-1. 外部写作系统向知识库发起 `POST /v1/context/assemble`（请求场景写作上下文）；
-2. 知识库内部调用 FTS5、本地 Embedding 和状态账本，必要时调用网关生成章节摘要，完成上下文剪枝（控制在 2500~4000 tokens）；
-3. 知识库将组装好的纯净上下文与负面约束清单通过 JSON 返回给外部写作端；
-4. **外部写作端（如 novel-Skill）使用外部项目自己的模型配置和客户端去生成小说正文**，两者在进程、配置与代码实现上彻底解耦。
+外部写作端与 Fxi 仍保持领域解耦，但模型基础设施已统一：
+
+1. 外部写作系统可继续调用上下文、审查和状态接口，正文提示词、预算、调用记录与输出校验仍由外部系统负责；
+2. `novel-Studio` 默认通过自己的 `FxiClient` 调用 `POST /v1/models/health` 和 `POST /v1/models/chat`；接口要求 `writer` 或 `admin` actor；
+3. Fxi 进程的 `app.state.model_gateway` 是 provider 配置、密钥池轮询游标和冷却状态的单一所有者，实际路由来自 `config/models.yaml`；
+4. Studio 的 `FXI_API_TOKEN` 只用于 actor 鉴权；Agnes、Gemini 等 provider API key 只存于 Fxi 的工作区 `.env` 或进程环境，REST 请求不接受密钥字段；
+5. Studio 只有在显式设置 `use_fxi_gateway=false` 时才进入应急直连模式。Fxi 代理失败不会自动直连回退，避免绕过统一限流与审计状态。

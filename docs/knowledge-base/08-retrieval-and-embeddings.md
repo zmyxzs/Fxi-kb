@@ -1,5 +1,7 @@
 # 08 检索、中文分词、POV 视线过滤与场景剪枝
 
+> **当前实现状态**：中文 FTS5、能力驱动问答计划、来源/时间线范围和 ContextPruner 的 POV 剪枝已可用；embedding、向量数据库和 RRF 混合重排仍是规划项，不应按本设计文档的模型清单判断为已安装能力。
+
 ## 这一部分用来做什么
 
 它负责在作者写作或 `novel-Skill` 发起请求时，根据 **当前项目 + 查询意图 + 故事时间点 + 叙述视角 (POV) + 场景类型**，精准召回所需材料，并完成上下文体积剪枝：
@@ -76,6 +78,12 @@ Python jieba 分词引擎 ◄── 加载 [动态项目专有词典 Project Lex
     ▼
 输出精准证据包 (Context Evidence Pack)
 ```
+
+当前实现中，上图第 3～4 步（向量召回和 RRF）尚未接入生产调用链。问答实际走
+`QueryEngine → RetrievalPlanBuilder → ChineseFTS/领域只读读取器`，返回能力级
+`evidence_blocks`；没有明确 source/timeline/provenance 的结果只可标为
+`INCOMPLETE` 或 `LEGACY_HINT`，不会被当作权威事实。写作请求仍必须单独经过
+`ContextPruner` 的 POV、knowledge/source version 和预算门。
 
 ---
 

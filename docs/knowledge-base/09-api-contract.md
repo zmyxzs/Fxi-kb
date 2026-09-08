@@ -14,6 +14,7 @@ API 是薄边界：所有校验、作用域隔离、分歧点过滤、POV 视线
 |---|---|---|
 | `novel-Skill` | `query` | 只读检索、获取场景上下文（带 POV 过滤）、读取防 OOC 报告、查询状态账本余额 |
 | `novel-Skill`（可选提议） | `propose` | 提交 AI 分析抽取结果、生成上下文快照、候选主张提议 |
+| `novel-Studio` 模型调用 | `writer` | 调用受鉴权的模型健康预检与 chat 代理；不能据此提交知识库事实或章节 |
 | 用户 CLI / 交互式管理 | `query`、`propose`、`commit` | 查询、提议、人工审核批准（accept/reject）、四级生命周期标记、合法 Retcon 声明 |
 | 运维管理命令 | `admin` | 来源导入、纯文本一键全量重建（rebuild）、数据库备份与恢复 |
 
@@ -176,6 +177,22 @@ POST /v1/restore
 GET  /v1/health
 ```
 
+### 4.10 受鉴权模型代理
+
+```text
+POST /v1/models/health
+POST /v1/models/chat
+```
+
+两条接口都要求 `writer` 或 `admin` actor。请求只接受路由选择和生成参数，不接受 API key：
+
+- `task_type`：任务路由名，默认 `scene_drafting`；
+- `provider_override`、`model_override`：可选的显式 provider/model 覆盖；
+- `chat` 另接收 `system_prompt`、`user_prompt`、`temperature`、`max_tokens`，且两个 prompt 至少一个非空；
+- 未声明字段会被拒绝，供应商密钥只能由 Fxi 进程环境或工作区 `.env` 提供。
+
+`health` 返回 `{"healthy": true|false}`，只检查路由与凭据，不发起付费生成；`chat` 成功返回 `{"content": "..."}`。Fxi 进程通过 `app.state.model_gateway` 复用单例网关，因此同一进程内的 Studio 请求共享 provider 密钥池轮询游标和冷却状态。供应商请求失败统一返回 `502 MODEL_GATEWAY_ERROR`，空输出返回 `502 MODEL_GATEWAY_INVALID_OUTPUT`，响应不回显密钥、供应商错误正文或完整 prompt。
+
 ---
 
 ## 5. CLI 命令对应关系
@@ -218,4 +235,6 @@ kb backup create
 - `OOC_DETECTED`：草稿检测到严重人设崩塌（非 Retcon 声明区域）；
 - `PURGE_BLOCKED`：存在依赖该节点的活跃引用，物理删除被拦截；
 - `STALE_SNAPSHOT`：前置事件变更，派生快照需重新计算；
-- `TOKEN_BUDGET_EXCEEDED`：检索召回内容超出预算限制。
+- `TOKEN_BUDGET_EXCEEDED`：检索召回内容超出预算限制；
+- `MODEL_GATEWAY_ERROR`：模型供应商请求失败，HTTP 502；
+- `MODEL_GATEWAY_INVALID_OUTPUT`：模型供应商返回空内容，HTTP 502。

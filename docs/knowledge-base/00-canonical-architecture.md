@@ -1,6 +1,8 @@
 # 知识库统一架构与文档总纲
 
 > 本文是知识库全系统的最高权威设计总纲。各专题文档负责展开细节，但不得重新定义与本文冲突的模块边界、数据生命周期、真理源归属或写入权限。
+>
+> **实现状态声明（2026-09）**：本文描述目标架构和长期约束，不等同于当前已上线能力。embedding/向量检索、离线队列、自动 failover、提示词外置和任意数据库全量重建目前仍是规划项；实际可用性以 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) 与 [dev-docs/08-current-implementation-and-operations.md](../../dev-docs/08-current-implementation-and-operations.md) 为准。
 
 ---
 
@@ -14,7 +16,7 @@
 - 支持多写作项目（AU、原创、分支版本）强隔离、分歧点（POD）过滤与草稿分支（Draft Forking）；
 - 支持通用写作技法、风格档案、范例与创意素材的复用、沙盒试用（Canary）与负向约束（Anti-Pattern）；
 - 支持中途平滑引入新系统（三态数值与基线锚点），支持作者合法吃书（Retcon 追溯性修正）；
-- 通过支持中文分词的全文检索、可选本地 embedding、POV 视线盲区过滤和场景化剪枝返回精准证据包；
+- 通过支持中文分词的全文检索、规划中的可选本地 embedding、POV 视线盲区过滤和场景化剪枝返回精准证据包；
 - 为 `novel-Skill` 或外部写作工具提供稳定、可追溯、防 OOC、防视角泄密的只读检索与结构化检查接口。
 
 ### 明确不做的事项（非目标）
@@ -44,7 +46,7 @@ novel-Skill（外部消费者）：理解当前写作任务，调用知识库，
 
 ### 3.1 纯文本优先与单真理源（Text-First Single Source of Truth）
 - **Markdown/TXT 是唯一真理源**：所有核心实体、设定、草稿与素材，底层均以带 YAML Frontmatter 的纯文本持久化；
-- **数据库是可丢弃的加速器**：SQLite、FTS5 中文表、向量索引均为衍生数据。任何故障或重构只需运行 `kb rebuild` 即可从纯文本 100% 满血恢复。
+- **数据库应尽量是可重建的加速器（目标）**：SQLite、FTS5 中文表、向量索引的派生性是长期方向；当前动态账本、认知、连续性和 v2 审计表没有完整 replay contract，`kb rebuild` 会 fail closed，不能宣称从纯文本 100% 恢复。
 
 ### 3.2 审核防疲劳：惰性抽取与分级分流（Lazy Extraction & Triage）
 - **按需惰性抽取**：严禁全书无差别深度抽取，仅对作者指定写作区间触发；
@@ -85,8 +87,8 @@ novel-Skill（外部消费者）：理解当前写作任务，调用知识库，
 ### 3.11 知识库统一模型网关与提示词解耦（Model Gateway & Prompt Decoupling）
 - **边界清晰**：本项目纯粹为**知识库**，正文写作属于外部项目（如 `novel-Skill`）。知识库内部使用大模型仅限于“导入抽取、OOC审查、风格特征提取、分卷/章节滚动摘要生成与向量化”；
 - **全库统一网关（`model-gateway`）**：知识库内部各模块严禁各自重复编写 SDK/HTTP 调用；通过统一网关提供任务分级路由、故障备用切换、结构化容错修复（`json_repair` + Pydantic）、哈希调用缓存与成本记账；
-- **提示词模板外部化**：提示词独立存放于 `prompts/` 目录，禁止在业务 Python 代码中硬编码，支持无重启热更新与版本复现；
-- **离线模式优雅降级**：断网或 API 故障时，本地 jieba FTS5 搜索、状态账本重算、本地 Qwen3-Embedding 100% 正常运行，大模型任务离线排队，创作者本地查阅绝不卡死。
+- **提示词模板外部化（目标）**：长期应把提示词独立存放于 `prompts/` 目录；当前部分模板仍在 Python 常量中，不能宣称已支持热更新。
+- **离线模式优雅降级（目标）**：当前可用的是本地 jieba FTS5 与确定性状态计算；本地 embedding、离线排队和自动 failover 尚未接入，断网时模型任务必须显式失败并保留诊断。
 
 ---
 

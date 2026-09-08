@@ -2,6 +2,8 @@
 
 本文件是全库兼容入口。系统整体规划与架构方案已全面升级，并按问题域完成模块化拆分。
 
+> 本文件和下方专题主要是规划/设计入口，不是当前运行状态证明。使用前请先阅读 [当前实现状态与边界](knowledge-base/16-current-implementation-status-and-boundaries.md)；工程启动、认证、API、CLI、备份和重建以 [当前实现手册](../dev-docs/08-current-implementation-and-operations.md) 为准。
+
 👉 **[点击打开知识库完整规划与专题索引](knowledge-base/README.md)**
 
 ---
@@ -45,3 +47,4 @@
 - [14 后期使用场景、兼容性与系统演进](knowledge-base/14-future-scenarios-compatibility-and-evolution.md)
 - [14a API 扩展备注：动态状态、风格反馈与生命周期](knowledge-base/14a-api-extension-notes.md)
 - [15 模型管理与统一大模型网关](knowledge-base/15-model-management-and-llm-gateway.md)
+- [16 当前实现状态、功能可用性与边界](knowledge-base/16-current-implementation-status-and-boundaries.md)
