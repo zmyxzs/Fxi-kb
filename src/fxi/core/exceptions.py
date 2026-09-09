@@ -72,7 +72,7 @@ class CausalConflictError(RuleViolationError):
 
 
 class ResourceDeficitError(RuleViolationError):
-    """领地/宗门/据点资源不足导致透支"""
+    """领地、组织或据点资源不足导致透支"""
     def __init__(self, message: str):
         super().__init__(message, code="RESOURCE_DEFICIT")
 
@@ -84,7 +84,7 @@ class SkillCastIllegalError(RuleViolationError):
 
 
 class OwnershipConflictError(RuleViolationError):
-    """试图操作已遗失、被夺或未持有的法宝道具"""
+    """试图操作已遗失、被夺或未持有的物品"""
     def __init__(self, message: str):
         super().__init__(message, code="OWNERSHIP_CONFLICT")
 

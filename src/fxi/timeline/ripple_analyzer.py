@@ -5,6 +5,7 @@ fxi.timeline.ripple_analyzer - 蝴蝶效应涟漪扩散分析器 (同人剧情�
 from dataclasses import dataclass, field
 from typing import Any, Optional, Set
 from fxi.core.config import FxiConfig, load_config
+from fxi.core.exceptions import NotFoundError, ValidationError
 from fxi.core.types import CausalStatus
 from fxi.storage.sqlite_client import DatabaseClient
 from fxi.timeline.dag import CausalDAG
@@ -18,6 +19,7 @@ class RippleImpactTree:
     mutated_canon_events: list[dict[str, Any]] = field(default_factory=list)
     affected_characters: list[str] = field(default_factory=list)
     suggested_alternatives: list[str] = field(default_factory=list)
+    mapped_fanfic_event_id: Optional[str] = None
 
 
 class RippleAnalyzer:
@@ -27,6 +29,12 @@ class RippleAnalyzer:
         self.config = config or load_config()
         self.db_client = DatabaseClient(self.config.sqlite_path)
         self.dag = CausalDAG(self.config)
+        self._ensure_mapping_schema()
+
+    def _ensure_mapping_schema(self) -> None:
+        """Delegate mapping-table creation and migration to DatabaseClient."""
+
+        self.db_client.init_db()
 
     def mark_divergence(
         self,
@@ -40,6 +48,39 @@ class RippleAnalyzer:
         """
         在同人作品中标记分歧点，并自动计算下游蝴蝶效应染色
         """
+        if work_id == canon_work_id:
+            raise ValidationError("同人作品和原著作品必须通过显式作品范围区分")
+
+        with self.db_client.get_connection() as conn:
+            cur = conn.execute(
+                """
+                SELECT event_id, work_id, is_canon
+                FROM causal_events
+                WHERE work_id = ? AND event_id = ?
+                """,
+                (canon_work_id, canon_event_id),
+            )
+            canon_event = cur.fetchone()
+            if not canon_event:
+                raise NotFoundError(f"未找到原著事件: {canon_work_id}/{canon_event_id}")
+            if not canon_event["is_canon"]:
+                raise ValidationError(f"分歧源事件必须是原著事件: {canon_event_id}")
+
+        # Validate the explicit mapping before creating the fanfic node so a
+        # conflict cannot leave an orphaned event behind.
+        with self.db_client.get_connection() as conn:
+            existing = conn.execute(
+                "SELECT fanfic_event_id FROM timeline_event_mappings WHERE work_id = ? AND canon_work_id = ? AND canon_event_id = ?",
+                (work_id, canon_work_id, canon_event_id),
+            ).fetchone()
+            if existing and existing["fanfic_event_id"] != fanfic_event_id:
+                raise ValidationError(f"原著事件 {canon_event_id} 已映射到另一个同人事件 {existing['fanfic_event_id']}")
+            reverse = conn.execute(
+                "SELECT canon_event_id FROM timeline_event_mappings WHERE work_id = ? AND fanfic_event_id = ?",
+                (work_id, fanfic_event_id),
+            ).fetchone()
+            if reverse and reverse["canon_event_id"] != canon_event_id:
+                raise ValidationError(f"同人事件 {fanfic_event_id} 已映射到另一个原著事件")
         # 1. 注册同人事件节点
         self.dag.register_event(
             event_id=fanfic_event_id,
@@ -52,13 +93,52 @@ class RippleAnalyzer:
             status="mutated"
         )
 
-        # 2. 查询原著中被颠覆事件的所有下游因果
+        # 2. 持久化显式事件映射；同一映射可安全重放，不同目标拒绝覆盖。
+        with self.db_client.transaction() as cur:
+            cur.execute(
+                """
+                SELECT fanfic_event_id
+                FROM timeline_event_mappings
+                WHERE work_id = ? AND canon_work_id = ? AND canon_event_id = ?
+                """,
+                (work_id, canon_work_id, canon_event_id),
+            )
+            existing = cur.fetchone()
+            if existing and existing["fanfic_event_id"] != fanfic_event_id:
+                raise ValidationError(
+                    f"原著事件 {canon_event_id} 已映射到另一个同人事件 {existing['fanfic_event_id']}"
+                )
+            cur.execute(
+                """
+                SELECT canon_event_id
+                FROM timeline_event_mappings
+                WHERE work_id = ? AND fanfic_event_id = ?
+                """,
+                (work_id, fanfic_event_id),
+            )
+            fanfic_mapping = cur.fetchone()
+            if fanfic_mapping and fanfic_mapping["canon_event_id"] != canon_event_id:
+                raise ValidationError(
+                    f"同人事件 {fanfic_event_id} 已映射到另一个原著事件"
+                )
+            if not existing:
+                cur.execute(
+                    """
+                    INSERT INTO timeline_event_mappings
+                    (work_id, canon_work_id, canon_event_id, fanfic_event_id, created_at)
+                    VALUES (?, ?, ?, ?, datetime('now'))
+                    """,
+                    (work_id, canon_work_id, canon_event_id, fanfic_event_id),
+                )
+
+        # 3. 查询原著中被颠覆事件的所有下游因果
         descendants = self.dag.get_descendants(canon_work_id, canon_event_id)
 
         # 3. 分析下游染色
         impact_tree = RippleImpactTree(
             work_id=work_id,
-            divergence_canon_event_id=canon_event_id
+            divergence_canon_event_id=canon_event_id,
+            mapped_fanfic_event_id=fanfic_event_id,
         )
 
         with self.db_client.get_connection() as conn:
@@ -105,26 +185,36 @@ class RippleAnalyzer:
         # 1. 查找 intended_canon_event_id 的所有前置依赖 (Ancestors)
         ancestors = self.dag.get_ancestors(canon_work_id, intended_canon_event_id)
 
-        # 2. 检查这些前置依赖是否有任何一个在同人作品中被标记为分歧/阻断
+        # 2. 只读取持久化的显式 canon_event_id 映射，不从 ID/摘要做字符串猜测。
         sql = """
-        SELECT event_id, summary FROM causal_events
-        WHERE work_id = ? AND is_canon = 0
+        SELECT canon_event_id, fanfic_event_id
+        FROM timeline_event_mappings
+        WHERE work_id = ? AND canon_work_id = ?
         """
-        fanfic_divergences = {}
+        mapped_events: dict[str, str] = {}
         with self.db_client.get_connection() as conn:
-            cur = conn.execute(sql, (work_id,))
+            cur = conn.execute(sql, (work_id, canon_work_id))
             for row in cur.fetchall():
-                fanfic_divergences[row["event_id"]] = row["summary"]
+                mapped_events[row["canon_event_id"]] = row["fanfic_event_id"]
 
         direct_causes = self.dag.get_direct_causes(canon_work_id, intended_canon_event_id)
 
-        # 比对
+        # 直接映射到目标事件本身也表示该原著事件已被分歧替代。
+        if intended_canon_event_id in mapped_events:
+            fanfic_event_id = mapped_events[intended_canon_event_id]
+            return (
+                CausalStatus.INVALIDATED,
+                f"原著事件 [{intended_canon_event_id}] 已由同人事件 [{fanfic_event_id}] 替代",
+                ["围绕同人事件的后继事实重写该剧情，不得直接复用原著事件。"],
+            )
+
         broken_causes = []
         for c in direct_causes:
-            # 检查是否有对应同人改动颠覆了 c
-            for f_id, f_desc in fanfic_divergences.items():
-                if c in f_id or c in f_desc:
-                    broken_causes.append(f"前置因果 [{c}] 已在同人中被改动: {f_desc}")
+            fanfic_event_id = mapped_events.get(c)
+            if fanfic_event_id:
+                broken_causes.append(
+                    f"前置因果 [{c}] 已由同人事件 [{fanfic_event_id}] 改动"
+                )
 
         if broken_causes:
             return (
@@ -134,11 +224,7 @@ class RippleAnalyzer:
             )
 
         # 检查间接影响 (Ancestors)
-        indirect_affected = []
-        for anc in ancestors:
-            for f_id, f_desc in fanfic_divergences.items():
-                if anc in f_id or anc in f_desc:
-                    indirect_affected.append(anc)
+        indirect_affected = [anc for anc in ancestors if anc in mapped_events]
 
         if indirect_affected:
             return (

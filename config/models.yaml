@@ -1,41 +1,97 @@
-default_provider: "luna_local"
+default_provider: "agnes"
 
 providers:
+  agnes:
+    adapter: "openai_compatible"
+    base_url: "https://apihub.agnes-ai.com/v1"
+    api_key_envs:
+      - "AGNES_API_KEY"
+      - "AGNES_API_KEY_2"
+      - "AGNES_API_KEY_3"
+    rotate_on_each_call: true
+    key_cooldown_seconds: 60.0
+    default_model: "agnes-3.0-flash"
+    timeout: 120.0
+    max_retries: 3
+
+  tokenrhythm:
+    base_url: "https://tokenrhythm.studio/v1"
+    api_key_env: "TOKENRHYTHM_API_KEY"
+    default_model: "glm-5.3-flash"
+    reasoning_effort: "low"
+    timeout: 180.0
+    max_retries: 3
+
+  bai:
+    base_url: "https://api.b.ai/v1"
+    api_key_env: "BAI_API_KEY"
+    default_model: "glm-5.3-flash"
+    reasoning_effort: "low"
+    timeout: 180.0
+    max_retries: 3
+
   luna_local:
     base_url: "http://localhost:51109/v1"
-    api_key: "agt_codex_YT8KLTda0AinwT91XgwO8tIZ9MiHnsfb"
     api_key_env: "LUNA_API_KEY"
-    default_model: "gpt-5.6-luna"
-    reasoning_model: "gpt-5.6-luna"
+    default_model: "gpt-5.6-Luna"
+    reasoning_model: "gpt-5.6-Luna"
     reasoning_effort: "low"
+
   openai_compatible:
     base_url: "https://api.deepseek.com/v1"
     api_key_env: "DEEPSEEK_API_KEY"
     default_model: "deepseek-chat"
     reasoning_model: "deepseek-reasoner"
+
   google_genai:
-    api_key_env: "GEMINI_API_KEY"
+    adapter: "google_genai"
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+    api_key_envs:
+      - "GEMINI_API_KEY"
+      - "GEMINI_API_KEY_2"
+    # Gemini 配额按 Google 项目计算；同一项目的多个 key 仅提供轮换/容错。
+    rotate_on_each_call: true
+    key_cooldown_seconds: 60.0
     default_model: "gemini-2.5-flash"
     reasoning_model: "gemini-2.5-pro"
 
 task_routes:
+  # 知识库数据管道任务
   fast_extraction:
-    provider: "luna_local"
-    model: "5.6-Luna"
-    reasoning_effort: "low"
+    provider: "default"
+    model: "default"
     temperature: 0.1
   structured_repair:
-    provider: "luna_local"
-    model: "5.6-Luna"
-    reasoning_effort: "low"
+    provider: "default"
+    model: "default"
     temperature: 0.0
   deep_reasoning_ooc:
-    provider: "luna_local"
-    model: "5.6-Luna"
-    reasoning_effort: "medium"
+    provider: "default"
+    model: "default"
     temperature: 0.2
   ripple_analysis:
-    provider: "luna_local"
-    model: "5.6-Luna"
-    reasoning_effort: "medium"
+    provider: "default"
+    model: "default"
     temperature: 0.3
+  style_mining:
+    provider: "default"
+    model: "default"
+    temperature: 0.2
+
+  # novel-Studio 网文写作工程任务
+  scene_drafting:
+    provider: "default"
+    model: "default"
+    temperature: 0.6
+  chapter_planning:
+    provider: "default"
+    model: "default"
+    temperature: 0.3
+  scene_review:
+    provider: "default"
+    model: "default"
+    temperature: 0.1
+  cost_ladder:
+    provider: "default"
+    model: "default"
+    temperature: 0.2

@@ -16,18 +16,7 @@ class KnowledgeTracker:
         self._ensure_table()
 
     def _ensure_table(self) -> None:
-        with self.db_client.transaction() as cur:
-            cur.execute("""
-            CREATE TABLE IF NOT EXISTS character_known_claims (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                work_id TEXT NOT NULL,
-                character_id TEXT NOT NULL,
-                claim_id TEXT NOT NULL,
-                learned_narrative_order INTEGER NOT NULL,
-                scene_uuid TEXT,
-                UNIQUE(work_id, character_id, claim_id)
-            );
-            """)
+        self.db_client.init_db()
 
     def record_learned_claim(
         self,
@@ -57,3 +46,18 @@ class KnowledgeTracker:
         with self.db_client.get_connection() as conn:
             cur = conn.execute(sql, (work_id, character_id, current_order))
             return {row["claim_id"] for row in cur.fetchall()}
+
+    def get_known_claims_at_narrative_order(
+        self,
+        work_id: str,
+        character_id: str,
+        narrative_order: int,
+    ) -> Set[str]:
+        """返回角色在指定叙事序号已经获知的主张。
+
+        这是上下文组装使用的显式时间边界。保留 ``get_known_claims`` 作为
+        v1 兼容入口，避免调用方把“当前时间”误解成数据库中的最新状态。
+        """
+        if narrative_order < 0:
+            raise ValueError("narrative_order must be non-negative")
+        return self.get_known_claims(work_id, character_id, narrative_order)

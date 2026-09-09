@@ -1,0 +1,16 @@
+schema_version: 1
+source_id: linfeng
+version: 1655496742ae88d752e3a8f9b2db374928d02228e1603a6f647d9b17c673996e
+manifest_hash: 1655496742ae88d752e3a8f9b2db374928d02228e1603a6f647d9b17c673996e
+normalization_version: newline-bom-v1
+documents:
+- document_id: raw
+  chapter_index: 1
+  relative_path: raw.txt
+  raw_sha256: fc3c43ce64581298ace104e0c60d161292eaf7e5898614c880016fd24ef4a244
+  content_hash: 749dc5454226d1354dbb4d05047d9a6d9bfbe14c78fa958d2386a9745564675b
+  char_count: 3172
+  encoding: utf-8
+  normalization_version: newline-bom-v1
+title: 临风武馆
+file_name: 3.txt

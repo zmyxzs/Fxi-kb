@@ -2,7 +2,6 @@
 fxi.storage.text_io - 纯文本 YAML Frontmatter 原子读写与冲突守卫
 """
 
-import hashlib
 import os
 import tempfile
 from pathlib import Path
@@ -10,11 +9,12 @@ from typing import Any, Optional, Tuple
 import yaml
 
 from fxi.core.exceptions import CorruptedDataError, FileLockedError
+from fxi.core.canonical import sha256_hex
 
 
 def calculate_content_hash(text: str) -> str:
     """计算文本内容的 SHA-256 哈希值"""
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return sha256_hex(text)
 
 
 def read_markdown_frontmatter(file_path: Path) -> Tuple[dict[str, Any], str]:
@@ -23,7 +23,7 @@ def read_markdown_frontmatter(file_path: Path) -> Tuple[dict[str, Any], str]:
     返回: (metadata_dict, body_text)
     """
     if not file_path.is_file():
-        return {}, ""
+        raise CorruptedDataError(f"文件不存在或不是普通文件: {file_path}")
 
     try:
         content = file_path.read_text(encoding="utf-8")
@@ -36,17 +36,20 @@ def read_markdown_frontmatter(file_path: Path) -> Tuple[dict[str, Any], str]:
     # 寻找结束分隔符
     end_idx = content.find("\n---", 3)
     if end_idx == -1:
-        return {}, content
+        raise CorruptedDataError(f"YAML Frontmatter 缺少结束分隔符: {file_path}")
 
     yaml_block = content[3:end_idx].strip()
     body_text = content[end_idx + 4:].lstrip("\r\n")
 
     try:
-        metadata = yaml.safe_load(yaml_block) or {}
-        if not isinstance(metadata, dict):
-            metadata = {}
+        metadata = yaml.safe_load(yaml_block)
     except Exception as e:
         raise CorruptedDataError(f"YAML Frontmatter 解析错误 {file_path}: {e}")
+
+    if metadata is None:
+        metadata = {}
+    if not isinstance(metadata, dict):
+        raise CorruptedDataError(f"YAML Frontmatter 必须是对象: {file_path}")
 
     return metadata, body_text
 
@@ -86,12 +89,16 @@ def write_markdown_frontmatter(
     try:
         os.replace(temp_name, file_path)
     except Exception as e:
+        cleanup_error: Optional[OSError] = None
         if os.path.exists(temp_name):
             try:
                 os.remove(temp_name)
-            except OSError:
-                pass
-        raise FileLockedError(f"原子覆写文件失败 {file_path}: {e}")
+            except OSError as cleanup_exc:
+                cleanup_error = cleanup_exc
+        message = f"原子覆写文件失败 {file_path}: {e}"
+        if cleanup_error is not None:
+            message += f"；临时文件清理失败: {cleanup_error}"
+        raise FileLockedError(message) from e
 
     # 立即回读自检
     verified_content = file_path.read_text(encoding="utf-8")

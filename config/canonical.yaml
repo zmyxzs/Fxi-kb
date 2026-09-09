@@ -1,0 +1,22 @@
+# 作品规范注册模板
+# 将本文件复制为 projects/<work_id>/entities/canonical.yaml 后按作品填写。
+# 规范配置只在所属作品目录内生效，不会跨作品回退或共享名称映射。
+version: 1
+scope: "<work_id>"
+
+# 新配置建议按实体类型分组，避免同名角色、物品或地点互相绑定。
+canonical_ids:
+  character: {}
+  item: {}
+  location: {}
+  faction: {}
+
+# 也可用 alias -> canonical_id 的形式声明别名。
+aliases:
+  character: {}
+  item: {}
+  location: {}
+  faction: {}
+
+# 或使用条目形式，同时声明类型、规范名称和别名。
+entities: []

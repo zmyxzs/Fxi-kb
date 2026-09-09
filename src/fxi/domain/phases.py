@@ -1,5 +1,5 @@
 """
-fxi.domain.phases - 实体性格阶段与时序相态演变管理 (性格黑化、心性蜕变、法宝进阶)
+fxi.domain.phases - 实体阶段与时序相态演变管理
 """
 
 import json
@@ -38,9 +38,17 @@ class PhaseManager:
             ensure_entity(cur, work_id, entity_id)
             cur.execute(
                 """
-                INSERT OR REPLACE INTO entity_phases
+                INSERT INTO entity_phases
                 (phase_id, work_id, entity_id, phase_name, valid_from_order, valid_to_order, traits_json, anti_behaviors_json, tone_examples_json, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                ON CONFLICT(work_id, entity_id, phase_id) DO UPDATE SET
+                    phase_name = excluded.phase_name,
+                    valid_from_order = excluded.valid_from_order,
+                    valid_to_order = excluded.valid_to_order,
+                    traits_json = excluded.traits_json,
+                    anti_behaviors_json = excluded.anti_behaviors_json,
+                    tone_examples_json = excluded.tone_examples_json,
+                    updated_at = excluded.updated_at
                 """,
                 (
                     phase_id,

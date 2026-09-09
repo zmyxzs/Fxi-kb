@@ -26,17 +26,40 @@ venv/
 ENV/
 env/
 
+# Secrets
+.env
+
 # Pytest / Coverage
 .pytest_cache/
 .coverage
 htmlcov/
+pytest-of-*/
+.pytest-*/
+.audit_pytest_*/
+.recovery-test-basetemp/
+.fxi-*/
+.fxi_infra_probe_*/
+.evidence-regression-runtime/
+.v2-closure-*/
+.state-*.sqlite*
+.state-*.txt
+fxi-*-repro-*/
+fxi-scene-radar-*/
+fxi-work-package-*/
 
 # Local SQLite databases & ephemeral caches
 data/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+*.db
 *.log
+
+# Codex task metadata is local workspace state, not application source.
+.codex/
+
+# Ad-hoc temporary directories created by local probes.
+tmp*/
 
 # IDE & OS
 .vscode/

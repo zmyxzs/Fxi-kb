@@ -1,0 +1,91 @@
+version: '1.0'
+description: 白金级网络文学创作高危反模式与缺陷避坑知识库 (Anti-Pattern Knowledge Base)
+patterns:
+- id: ANTI_THIRD_PERSON_SUMMARY
+  name: 第三人称概括式转述
+  severity: critical
+  scene_types:
+  - dialogue
+  - family_warmth
+  - slice_of_life
+  description: 在角色讲述心事、往事或人生遗憾时，作者退化为上帝视角第三人称总结（如‘赵空城说，他跑到车站……’），剥夺了角色的第一人称沉浸倾诉与口语语气。
+  detection_heuristic: 台词外密集出现‘某某说，他当年……’、‘向对方解释了……’、‘讲述了关于……的故事’，缺少连续第一人称对白引号与自然口语顿挫。
+  correction_principle: 必须将往事完全交还给角色本人，以第一人称连贯口述，保留口语中的犹豫、停顿、自嘲与物证（布袋、车站、雨声）。
+- id: ANTI_UNAUTHORIZED_RELATION_HALLUCINATION
+  name: 未授权亲属关系幻觉
+  severity: critical
+  scene_types:
+  - all
+  description: 大模型在生成家庭场景时，因 RLHF 偏置凭空捏造未被 FactLock 授权的不存在长辈或亲属（如凭空出现‘奶奶’、‘外婆’、‘二叔’）。
+  detection_heuristic: 草稿中出现 allowed_characters 或世界观中未定义的长辈称谓（如奶奶、外婆、姥姥、爷爷）。
+  correction_principle: 严格锁定在场家庭成员（如林七夜家仅限姨妈与杨晋），一经发现立即熔断拦截并剔除虚构亲属。
+- id: ANTI_STAGEY_PREACHING
+  name: 舞台剧宣讲与政工干部腔
+  severity: high
+  scene_types:
+  - dialogue
+  - campus_dialogue
+  description: 角色在说服或表明心迹时，使用伟光正大词、居高临下的道德说教、现代 HR 业务推销或日漫长篇独白鸡汤，丧失市井烟火气与现实糙劲。
+  detection_heuristic: 出现‘责任与担当’、‘作为新时代的守夜人’、‘这是我们必须肩负的使命’、‘五险一金’等脱节大词。
+  correction_principle: 成熟角色靠自嘲、护短、世俗糙劲说话；少年角色言简意赅，多用带刺短句、冷反问或大白话拆解，情感体现在行动而非宣讲。
+- id: ANTI_PROP_ABANDONMENT
+  name: 核心实体道具悬空与失落
+  severity: high
+  scene_types:
+  - all
+  description: 场景核心实体道具（如牛皮纸钱、烟盒、直刀、纹章）在被掏出或提及后，没有完成符合力学与心理动线的推拉交互，凭空消失在下文，沦为孤立道具背景板。
+  detection_heuristic: 道具在开头出现（如掏出牛皮纸包/烟），但后续无递交、推回、摩挲、收回怀里或点燃等完整动作链。
+  correction_principle: 道具移动方向必须对应人物关系变化：递出意味着给予与照顾，推回意味着保留尊严与拒绝，收回怀里意味着尊重与妥协。
+- id: ANTI_EMOTIONAL_FLATNESS
+  name: 情感反差节点缺乏留白与微动
+  severity: medium
+  scene_types:
+  - dialogue
+  - family_warmth
+  description: 在遭遇重大身世揭秘、尴尬吃瘪或残酷现实冲突时，角色毫无停顿、错愕或掩饰，像没有感情的对账机器一样无缝接话。
+  detection_heuristic: 对话连续密集无空拍，缺少独立成行的【……】沉默、视线错愕停顿或神态反差。
+  correction_principle: 重要反差节点必须保留空白停顿，以干脆的留白或极简神态替代长篇大论。
+- id: ANTI_MECHANICAL_CHOPPING
+  name: 机械截断与字数死刑碎片感
+  severity: medium
+  scene_types:
+  - all
+  description: 因机械限制段落字数，强行将完整语意的长句或连贯往事切碎成每行 3~5 个字的碎片，造成呼吸短促、阅读断续卡顿。
+  detection_heuristic: 连续出现 8 行以上无谓的单句或极短碎片行，缺少中长句段的自然流淌。
+  correction_principle: 段落服从注意力与心理流动，高危处短句快切，往事处长句舒展，叙事长短句错落交替。
+- id: ANTI_TELEGRAPHED_CLIFFHANGER
+  name: 全知视角透视破坏断章悬念
+  severity: high
+  scene_types:
+  - cliffhanger
+  - combat
+  description: 在章节或场景尾声，全知作者直接跳出来宣布危机结果（如‘他不知道一场灾难即将降临’），破坏了读者在第一视角的沉浸窒息感。
+  detection_heuristic: 出现‘殊不知’、‘他并不知道’、‘一场阴谋正在酝酿’等作者全知剧透语句。
+  correction_principle: 截断点必须停在生理反应最强烈而信息尚未完全揭示的前一拍（耳麦骤响、瞳孔骤缩、手颤熄火）。
+- id: ANTI_PROP_OBSESSION
+  name: 道具与微动作机械打卡抽搐 (AI伪具体)
+  severity: critical
+  scene_types:
+  - all
+  description: 同一随身道具（如烟盒、纹章、打火机）或动作在单场景内出现超过 2 次，反复掏、敲、蹭、摸，形成机械抽搐与伪具体打卡。
+  detection_heuristic: 单个场景内‘烟盒’、‘打火机’等道具关键词出现频次超过 2 次。
+  correction_principle: 道具出现必须服务于剧情推动与实质交换，严禁作为情绪垫词反复摆弄。
+- id: ANTI_ESSAY_SUMMARY
+  name: 作文式议论点题与作者说教升华
+  severity: critical
+  scene_types:
+  - all
+  description: 作者跳出视点写高中议论文总结或排比升华（如‘不是威风，也不是体面，是担当’、‘他身上忽然有了……’），破坏网文沉浸感。
+  detection_heuristic: 出现‘不是……也不是……是’排比句，或‘他身上忽然有了’、‘那是属于……的担当’等中学生点题句式。
+  correction_principle: 坚决通过具体行动推进，严禁作者在段落末尾写思想汇报与主题升华。
+- id: ANTI_FORCED_METAPHOR
+  name: 生造廉价比喻与用力过猛感官
+  severity: high
+  scene_types:
+  - dialogue
+  - campus_dialogue
+  - slice_of_life
+  description: 滥用小学生俗套比喻（‘像泼水’、‘像撒豆子’）或用力过猛的文艺通感（‘擦出一线冷光’、‘撞进车厢’）。
+  detection_heuristic: 出现俗套比喻词或在纯对话场景中比喻修辞句超过 1 处。
+  correction_principle: 极简白描重动词，用大白话生活常识推进，严禁堆砌无意义的文艺腔比喻。
+

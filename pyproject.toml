@@ -33,3 +33,20 @@ kb = "fxi.cli.main:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+norecursedirs = [
+    ".git",
+    ".venv",
+    "build",
+    "dist",
+    "data",
+    "projects",
+    "sources",
+    "materials",
+    ".*-runtime",
+    "fxi-*",
+]

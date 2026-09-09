@@ -1,5 +1,5 @@
 """
-fxi.territory.resources - 领地/宗门/据点资源日结算与产耗动力学引擎
+fxi.territory.resources - 领地、组织与据点资源日结算与产耗动力学引擎
 """
 
 from typing import Optional

@@ -4,6 +4,7 @@ fxi.state_ledger.anchor - 基准锚点管理器 (解决中途接入、零历史�
 
 from typing import Optional
 from fxi.core.config import FxiConfig, load_config
+from fxi.state_ledger.calculator import LedgerCalculator
 from fxi.storage.sqlite_client import DatabaseClient
 
 
@@ -13,6 +14,7 @@ class AnchorManager:
     def __init__(self, config: Optional[FxiConfig] = None):
         self.config = config or load_config()
         self.db_client = DatabaseClient(self.config.sqlite_path)
+        self.calculator = LedgerCalculator(self.config)
 
     def create_baseline_anchor(
         self,
@@ -22,30 +24,27 @@ class AnchorManager:
         baseline_value: float,
         narrative_order: int,
         scene_uuid: str,
-        reason: str = "中途接入基准设定"
+        reason: str = "中途接入基准设定",
+        commit_id: Optional[str] = None,
+        idempotency_key: Optional[str] = None,
+        knowledge_version: Optional[str] = None,
     ) -> int:
         """
         在指定叙事步长设定基准锚点：
         从此点向前保持 UNMEASURED (零历史包袱)，向后进行确定性结算。
+        通过 LedgerCalculator 写入 state_events 并绑定 state_event_receipts 幂等收据。
         """
-        from fxi.storage.sqlite_client import ensure_entity
-        with self.db_client.transaction() as cur:
-            ensure_entity(cur, work_id, entity_id)
-            cur.execute(
-                """
-                INSERT INTO state_events
-                (work_id, entity_id, metric_id, delta, new_value, is_anchor, scene_uuid, narrative_order, reason, created_at)
-                VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, datetime('now'))
-                """,
-                (
-                    work_id,
-                    entity_id,
-                    metric_id,
-                    baseline_value,
-                    baseline_value,
-                    scene_uuid,
-                    narrative_order,
-                    reason,
-                )
-            )
-            return cur.lastrowid
+        return self.calculator.record_event(
+            work_id=work_id,
+            entity_id=entity_id,
+            metric_id=metric_id,
+            delta=baseline_value,
+            scene_uuid=scene_uuid,
+            narrative_order=narrative_order,
+            new_value=baseline_value,
+            reason=reason,
+            is_anchor=True,
+            commit_id=commit_id,
+            idempotency_key=idempotency_key,
+            knowledge_version=knowledge_version,
+        )

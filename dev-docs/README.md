@@ -19,6 +19,8 @@
 
 本套开发文档（`dev-docs/`）为 `Fxi` 的工程落地蓝图，严格按照“可落地、可编码、文件职责明确、接口契约冻结”的标准制定：
 
+> **文档层次**：`01`～`07` 主要是设计蓝图、契约和实施路线；[08-current-implementation-and-operations.md](08-current-implementation-and-operations.md) 是当前工作区的 as-built 实现手册。实现状态、真实命令、失败分支和未落地能力以 `08`、代码和实际验证为准，不能仅凭蓝图中的“支持”判断功能已上线。
+
 | 编号 | 文档名称 | 核心内容与回答的工程问题 | 对应核心代码路径 |
 |:---:|:---|:---|:---|
 | **01** | [01-system-architecture.md](01-system-architecture.md) | **系统全景架构与双系统协同**：`Fxi` 与 `novel-Skill` 双核交互拓扑、数据流向闭环、真理源与派生层划分 | 全局架构 |
@@ -28,6 +30,7 @@
 | **05** | [05-data-schema-and-sqlite-ddl.md](05-data-schema-and-sqlite-ddl.md) | **数据契约、YAML 规范与 SQLite DDL**：纯文本 Markdown/YAML 规范、SQLite 表结构建表 DDL、一键重建流水线 | `src/fxi/storage/` |
 | **06** | [06-engineering-standards-and-testing.md](06-engineering-standards-and-testing.md) | **工程规范、错误处理与测试验收**：Windows/PowerShell 运行纪律、异常类继承树、日志与 19 项回归测试用例 (含游戏技能与领地结算) | `tests/`, 全库代码 |
 | **07** | [07-implementation-roadmap.md](07-implementation-roadmap.md) | **分步实施路线图与开发任务包**：Step 0 到 Step 5 的循序渐进落地计划、各阶段代码清单与交付里程碑 | 研发执行全周期 |
+| **08** | [08-current-implementation-and-operations.md](08-current-implementation-and-operations.md) | **当前实现与运维**：真实 CLI/API、认证、数据权威层、FTS、模型网关、备份/重建、可用性矩阵与故障排查 | 当前代码与运行流程 |
 
 ---
 
@@ -35,7 +38,7 @@
 
 1. **纯文本第一公民（Text-First Single Source of Truth）**：
    - 核心资产（设定、人物卡、因果事件、草稿 `draft.md`、技能规则）一律以 Markdown + YAML Frontmatter 格式存储在硬盘上；
-   - SQLite、FTS5 中文全文表、向量索引均为**派生加速缓存（随时可通过 `kb rebuild` 100% 重建）**。
+   - 设计目标是让 SQLite、FTS5 中文全文表和向量索引成为可重建的派生层；当前只能安全重放部分实体/关系/FTS 投影，实际边界以 [08-current-implementation-and-operations.md](08-current-implementation-and-operations.md) 为准。
 2. **游戏文与领主流的阶梯式投影（Anti-Bloat & Deterministic Calculation）**：
    - 绝不将 100 个技能与 20 种领地资源全量倾倒进 Prompt；
    - 采用【场景显性焦点面板 + 宏观剧作语义标签 + 被动防吃书雷达】的三层阶梯投影，将设定占用严控在 300~500 Tokens 内；
@@ -57,6 +60,9 @@
 
 ## 4. 推荐开发阅读与执行顺序
 
+0. **第 0 步：先确认当前实现边界**
+   - 阅读 [08-current-implementation-and-operations.md](08-current-implementation-and-operations.md)，确认哪些接口能调用、哪些能力需要数据或外部注入、哪些功能尚未实现；
+   - 再回到 `docs/knowledge-base/16-current-implementation-status-and-boundaries.md` 阅读面向知识库使用者的可用性结论。
 1. **第 1 步：通读架构全景与目录规划**
    - 阅读 [01-system-architecture.md](01-system-architecture.md) 确立整体心智模型；
    - 阅读 [02-directory-structure-and-storage-layout.md](02-directory-structure-and-storage-layout.md) 掌握落盘目录树。
@@ -68,3 +74,5 @@
    - 阅读 [06-engineering-standards-and-testing.md](06-engineering-standards-and-testing.md) 掌握异常体系与测试规范。
 4. **第 4 步：按路线图编码实施**
    - 按照 [07-implementation-roadmap.md](07-implementation-roadmap.md) 的任务包逐步推进。
+
+实现每个任务包后，回写 `08` 中对应的命令、接口、数据依赖和失败边界；若目标能力仍未落地，应保留“规划/条件可用/不可用”标记，避免设计文档与实际状态再次分叉。

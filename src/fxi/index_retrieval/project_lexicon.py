@@ -18,7 +18,7 @@ class LexiconManager:
 
     def export_lexicon(self, project_id: Optional[str] = None) -> Path:
         """
-        从 SQLite 的 entities、item_prototypes 表中导出人物名、宗门势力名、法宝名
+        从 SQLite 的 entities、item_prototypes 表中导出实体、势力和物品名称
         写入 data/project_lexicon.txt，并通知 jieba 加载
         """
         dict_path = self.config.jieba_custom_dict_path
@@ -40,7 +40,7 @@ class LexiconManager:
                 if name and len(name) >= 2:
                     words.add(name)
 
-            # 导出法宝模板
+            # 导出物品模板
             proto_query = "SELECT name FROM item_prototypes"
             if project_id:
                 proto_query += " WHERE work_id = ?"

@@ -68,6 +68,7 @@
 | **14a** | [14a-api-extension-notes.md](14a-api-extension-notes.md) | **API 扩展备忘**：动态状态账本、风格反馈、生命周期影响分析扩展接口规范 | `api-cli` |
 | **15** | [15-model-management-and-llm-gateway.md](15-model-management-and-llm-gateway.md) | **大模型统一网关**：Provider 抽象、任务分级路由、JSON 容错修复、调用哈希缓存与成本记账 | `model-gateway` |
 | **16** | [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) | **当前实现校准**：真实可用能力、依赖前置、设计与代码冲突、不可用功能、验收和故障边界 | 全局实现 |
+| **17** | [17-system-usage-runbook.md](17-system-usage-runbook.md) | **系统调用说明**：Fxi CLI/API 路由、来源/候选/审批边界、能力隔离、多来源冲突和与 Studio 的交接 | `api-cli`, `ops` |
 
 ---
 
@@ -76,6 +77,7 @@
 0. **先读现实校准（避免把设计当成现状）**
    - 读 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) 了解当前代码的真实边界；
    - 需要启动、认证、CLI/API、备份和重建细节时，继续读 [dev-docs/08-current-implementation-and-operations.md](../../dev-docs/08-current-implementation-and-operations.md)。
+   - 需要代表用户调用知识库时，先读 [17-system-usage-runbook.md](17-system-usage-runbook.md)，再选择 CLI/API 入口。
 1. **第一步：通读总纲与边界（建立全局观）**
    - 先读 [00-canonical-architecture.md](00-canonical-architecture.md) 了解最高原则与模块拓扑；
    - 读 [01-scope.md](01-scope.md) 确认当前自用边界与非目标。

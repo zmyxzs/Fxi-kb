@@ -366,6 +366,19 @@ def test_reg_18_territory_deficit_and_alerts(temp_workspace: FxiConfig):
 
 def test_reg_19_tiered_projection_and_passive_radar(temp_workspace: FxiConfig):
     """REG-19: 阶梯投影防爆与被动防吃书雷达 - 快捷栏只暴露重点技能，毒素威胁激活沉睡抗性"""
+    work_dir = temp_workspace.projects_dir / "work_a"
+    work_dir.mkdir(parents=True, exist_ok=True)
+    (work_dir / "work.yaml").write_text(
+        """work_id: work_a
+worldview_genre: fantasy
+threat_keywords:
+  毒素:
+    - 剧毒
+    - 毒蛇
+""",
+        encoding="utf-8",
+    )
+
     ste = SkillTreeEngine(temp_workspace)
     projector = TieredParameterProjector(temp_workspace)
     radar = PassiveThreatRadar(temp_workspace)

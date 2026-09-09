@@ -1,0 +1,8 @@
+document_id: raw
+chapter_index: 1
+relative_path: raw.txt
+raw_sha256: fc3c43ce64581298ace104e0c60d161292eaf7e5898614c880016fd24ef4a244
+content_hash: 749dc5454226d1354dbb4d05047d9a6d9bfbe14c78fa958d2386a9745564675b
+char_count: 3172
+encoding: utf-8
+normalization_version: newline-bom-v1

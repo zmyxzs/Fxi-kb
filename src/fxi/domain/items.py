@@ -31,9 +31,13 @@ class ItemManager:
             ensure_work(cur, work_id)
             cur.execute(
                 """
-                INSERT OR REPLACE INTO item_prototypes
+                INSERT INTO item_prototypes
                 (prototype_id, work_id, name, category, specs_json)
                 VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(work_id, prototype_id) DO UPDATE SET
+                    name = excluded.name,
+                    category = excluded.category,
+                    specs_json = excluded.specs_json
                 """,
                 (prototype_id, work_id, name, category, json.dumps(specs, ensure_ascii=False))
             )

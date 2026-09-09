@@ -1,22 +1,193 @@
 {
   "schema_version": 1,
-  "status": "active",
-  "task_id": "kb-plan-domain-restructure-2026-09-04",
-  "objective": "按用户确认的用途重新组织知识库规划：区分原始资料、故事世界模型、主张证据、项目覆写、角色认知/OOC、创意素材和检索接口，使每个文件有单一职责并说明实际用途",
+  "status": "done",
+  "task_id": "kb-integrity-batch-fix-20260906",
+  "owner": "codex-main-20260906",
+  "objective": "复核并批量修复知识库的来源证据、候选审批、提交投影、上下文时间隔离、状态回档、作品隔离、检索、网关和恢复链路；每项先复现再修复，保持工作包文件不重叠",
   "scope_in": [
-    "docs/knowledge-base/README.md；docs/knowledge-base/01-scope.md；02-sources-and-import.md；03-story-world-model.md；04-claims-and-provenance.md；05-projects-and-overlays.md；06-character-knowledge-and-ooc.md；07-materials.md；08-retrieval-and-embeddings.md；09-integration-contract.md；10-roadmap-and-acceptance.md；11-risks-and-decisions.md；docs/knowledge-base-plan.md；.codex/plan/current-plan.md"
+    "src/fxi/api",
+    "src/fxi/sources",
+    "src/fxi/index_retrieval",
+    "src/fxi/state_ledger",
+    "src/fxi/timeline",
+    "src/fxi/claims",
+    "src/fxi/domain",
+    "src/fxi/materials_skills",
+    "src/fxi/storage",
+    "src/fxi/model_gateway",
+    "tests"
   ],
   "scope_out": [
-    "不实现应用代码、不下载模型、不调用外部 API、不做 UI/OCR/Copilot、不解析真实作品、不删除旧内容"
+    "不修改 novel-Studio UI、真实生产数据库、原文正文和密钥；不覆盖已有用户改动"
   ],
-  "phase": "discovery",
-  "completed": [],
-  "decisions": [],
+  "phase": "complete",
+  "completed": [
+    "已读取 AGENTS、配置加载、被动雷达、技能状态与现有回归；提升运行确认 test_19 真实断言失败，现有配置化作品隔离回归通过",
+    "全量 pytest 结果 151 passed、6 failed；失败已分为 3 个安全契约旧测试不兼容和 3 个功能回归候选",
+    "计划、规则、锚点 JSON quick_validate 通过；compileall 通过；git diff --check 通过",
+    "被动雷达最小复现和直接相关测试已完成；新增范围测试 2 passed；指定 test_19 仍因 fixture 缺少 work.yaml 在 alerts 断言失败；compileall、git diff --check、rules/plan/anchor quick_validate 均通过",
+    "状态计算工作包完成：修复持久化规则版本优先级与规则变更后的无显式版本幂等重放；新增四类最小回归；直接相关测试全部通过",
+    "检索、上下文、状态、抽取器和反模式批次先复现后修复；各自新增边界回归并通过",
+    "主线程移除 model_gateway/repair.py 空捕获；候选能力分类改为显式候选字段或当前作品 work.yaml 规则，缺失时 innate 且返回诊断",
+    "最终全量 pytest 176 passed、6 failed，失败集合与修复前一致且均为旧安全契约或旧 fixture；未出现新增回归",
+    "联合回归 90 passed；recovery 6 passed；candidate 7 passed；redline 5 passed；compileall、diff check、规则/计划/锚点 quick_validate 全部通过",
+    "静态扫描未发现空 except pass；candidate_ingestor 不再含硬编码题材关键词；反模式不再按 *_fanfic 自动回退",
+    "完成多子智能体并发复核与修复：检索来源/版本隔离、上下文 POV/POD/计划揭示过滤、状态规则版本与 commit 幂等、抽取失败可见性、反模式作品隔离、JSON 修复异常可见性、候选能力分类配置化。",
+    "最终全量 176 passed、6 failed；6 个均是已有旧测试契约或旧 fixture，不是新回归。保留认证、人工审批、显式作品注册边界。"
+  ],
+  "decisions": [
+    "维持清理前 fail-closed；不对不可重放投影伪造重建成功",
+    "当前整合链路未发现真实断言失败；保留新增隔离和失败可见性边界",
+    "严格只允许 auto_extractor.py、batch_extractor.py 和新增 test_extractor_scope_regressions.py 写入；复用 CandidateStore，不新增抽取流程",
+    "先用最小测试验证四类状态账本问题；规则定义表是持久化权威来源，若内存缓存可跨实例陈旧则只修复该根因",
+    "修复范围仅限 calculator.py：默认规则版本以 state_metrics 持久化值为权威；无显式 rule_version 的带键重放先沿 receipt 读取原事件版本，显式版本变更仍保持冲突",
+    "根因是 test_19 的 temp_workspace 未写入 projects/work_a/work.yaml；当前雷达按 WORK_CONFIG_MISSING fail-closed，未发现需要改生产代码的缺陷；保留动态题材选择与同作品 skill 名称/描述匹配",
+    "匿名 v1 的 401 与候选正式入库 REVIEW_REQUIRED 属于新安全边界，不为兼容旧测试而绕过；被动雷达、对白雷达、上下文音色切片继续逐包复现",
+    "确认当前生产代码不需修改；保留 passive_radar.py 既有动态题材/作品隔离实现；旧 test_19 属于未提供显式 work.yaml 的过时契约，不能用全局关键词回退修复",
+    "commit/idempotency 仍按 work_id 隔离；同作品相同标识同载荷幂等返回，载荷或显式 rule_version 变化继续报 ValidationError；默认 rule_version 不再信任陈旧实例缓存",
+    "保留匿名 v1 401、未审批候选 REVIEW_REQUIRED、未配置作品雷达 INCOMPLETE 等安全/失败可见边界；不修旧测试契约",
+    "不为匿名 v1、未审批候选、缺失作品配置或旧 zhanshen_fanfic fixture 绕过安全边界；这些需调用方补认证/审批/显式作品配置或更新测试契约",
+    "保留 QueryEngine 对未登记历史来源返回诊断的兼容行为；彻底拒绝需扩展共享 work_sources 注册契约，另立工作包"
+  ],
   "next_actions": [],
   "blocked": [],
-  "touched_files": [],
-  "checks": [],
-  "last_command": null,
-  "last_result": null,
-  "updated_at": "2026-09-04T05:31:51+00:00"
+  "focus_files": [
+    "src/fxi/api/router_v2.py",
+    "src/fxi/sources/auto_extractor.py",
+    "src/fxi/index_retrieval/context_pruner.py",
+    "src/fxi/state_ledger/calculator.py",
+    "src/fxi/storage/rebuild.py",
+    "src/fxi/index_retrieval/query_engine.py",
+    "src/fxi/sources/batch_extractor.py",
+    "tests/test_state_timeline_regressions.py",
+    "tests/test_state_calculator_scope_regressions.py",
+    "src/fxi/game_engine/passive_radar.py",
+    "tests/regression/test_19_canonical_cases.py",
+    "tests/test_generic_isolation_regressions.py",
+    "src/fxi/core/config.py",
+    "src/fxi/domain/entities.py"
+  ],
+  "read_files": [
+    "src/fxi/api/router_v2.py",
+    "src/fxi/sources/auto_extractor.py",
+    "src/fxi/sources/candidate_ingestor.py",
+    "src/fxi/index_retrieval/context_pruner.py",
+    "src/fxi/state_ledger/calculator.py",
+    "src/fxi/timeline/reversion.py",
+    "src/fxi/storage/rebuild.py",
+    "src/fxi/index_retrieval/query_engine.py",
+    "src/fxi/storage/sqlite_client.py",
+    "tests/test_retrieval_regressions.py",
+    "tests/test_context_integration.py",
+    "src/fxi/sources/batch_extractor.py",
+    "tests/test_batch_extractor.py",
+    "tests/test_candidate_pipeline_regressions.py",
+    "tests/test_state_timeline_regressions.py",
+    "tests/test_state_calculator_scope_regressions.py",
+    "AGENTS.md",
+    "src/fxi/core/config.py",
+    "src/fxi/domain/entities.py",
+    "src/fxi/game_engine/passive_radar.py",
+    "src/fxi/game_engine/skills.py",
+    "tests/conftest.py",
+    "tests/regression/test_19_canonical_cases.py",
+    "tests/test_generic_isolation_regressions.py"
+  ],
+  "allowed_commands": [
+    "rg",
+    "pytest -q",
+    "python -m compileall -q src tests",
+    "git diff --check",
+    "git status --short",
+    "git diff --name-only",
+    "python C:\\\\Users\\\\39544\\\\.codex\\\\skills\\\\repo-navigation\\\\scripts\\\\quick_validate.py",
+    "pytest -q tests/test_batch_extractor.py tests/test_candidate_pipeline_regressions.py",
+    "pytest -q tests/test_generic_isolation_regressions.py::test_scene_and_threat_reads_are_work_scoped_and_configured",
+    "pytest -q tests/regression/test_19_canonical_cases.py::test_reg_19_tiered_projection_and_passive_radar",
+    "pytest -q tests/test_passive_radar_scope_regressions.py"
+  ],
+  "touched_files": [
+    "src/fxi/api/server.py",
+    "src/fxi/api/router_v1.py",
+    "src/fxi/api/registry.py",
+    "src/fxi/api/router_v2.py",
+    "src/fxi/storage/sqlite_client.py",
+    "src/fxi/state_ledger/calculator.py",
+    "src/fxi/index_retrieval/query_engine.py",
+    "src/fxi/index_retrieval/context_pruner.py",
+    "src/fxi/storage/rebuild.py",
+    "src/fxi/storage/backup.py",
+    "src/fxi/cli/commands_ops.py",
+    "src/fxi/timeline/continuity.py",
+    "src/fxi/storage/text_io.py",
+    "tests/test_recovery_regressions.py",
+    "src/fxi/sources/auto_extractor.py",
+    "src/fxi/sources/batch_extractor.py",
+    "tests/test_extractor_scope_regressions.py",
+    "tests/test_passive_radar_scope_regressions.py",
+    "tests/test_state_calculator_scope_regressions.py",
+    "src/fxi/materials_skills/anti_patterns.py",
+    "src/fxi/model_gateway/repair.py",
+    "src/fxi/sources/candidate_ingestor.py"
+  ],
+  "checks": [
+    {
+      "command": "python -m compileall -q src tests",
+      "result": "passed",
+      "exit_code": 0,
+      "at": "2026-09-06T06:14:55+00:00"
+    },
+    {
+      "command": "python C:\\\\Users\\\\39544\\\\.codex\\\\skills\\\\repo-navigation\\\\scripts\\\\quick_validate.py rules --path AGENTS.md",
+      "result": "passed",
+      "exit_code": 0,
+      "at": "2026-09-06T06:14:55+00:00"
+    },
+    {
+      "command": "python C:\\\\Users\\\\39544\\\\.codex\\\\skills\\\\repo-navigation\\\\scripts\\\\quick_validate.py anchor --path .codex/context/current.json",
+      "result": "passed",
+      "exit_code": 0,
+      "at": "2026-09-06T06:14:56+00:00"
+    },
+    {
+      "command": "pytest -q -p no:cacheprovider tests/test_candidate_ingestor_scope_regressions.py tests/test_candidate_pipeline_regressions.py --basetemp D:\\Code\\Fxi\\.pytest-candidate-final",
+      "result": "recorded",
+      "exit_code": null
+    },
+    {
+      "command": "pytest -q -p no:cacheprovider tests/test_anti_patterns_scope_regressions.py tests/test_model_gateway_safety.py --basetemp D:\\Code\\Fxi\\.pytest-redline-final",
+      "result": "recorded",
+      "exit_code": null
+    },
+    {
+      "command": "pytest -q --basetemp D:\\Code\\Fxi\\.pytest-all-final-3 -p no:cacheprovider",
+      "result": "recorded",
+      "exit_code": null
+    },
+    {
+      "command": "python -m compileall -q src tests",
+      "result": "recorded",
+      "exit_code": null
+    },
+    {
+      "command": "git diff --check",
+      "result": "recorded",
+      "exit_code": null
+    }
+  ],
+  "last_command": "python C:\\\\Users\\\\39544\\\\.codex\\\\skills\\\\repo-navigation\\\\scripts\\\\quick_validate.py anchor --path .codex/context/current.json",
+  "last_result": {
+    "result": "passed",
+    "exit_code": 0,
+    "workspace": null
+  },
+  "updated_at": "2026-09-06T06:37:27+00:00",
+  "conflict_check": {
+    "level": "NONE",
+    "with": [
+      "none"
+    ],
+    "reason": "修复包已全部收敛；共享路由和 schema 未由子包修改；主线程改动在既定范围",
+    "at": "2026-09-06T06:37:18+00:00"
+  }
 }

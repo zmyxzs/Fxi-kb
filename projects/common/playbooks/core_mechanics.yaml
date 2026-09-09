@@ -1,0 +1,74 @@
+# 通用剧作动力学与心理学机制知识库 (Core Dramaturgy Mechanics Playbook)
+# 适用范围: 全题材通用底层叙事动力学 (去专名抽象文学规范)
+# 效力层级: 叙事动力学 > 局部修辞手法 > 审查拦截规则
+
+version: "1.0.0"
+category: "universal_dramaturgy_dynamics"
+
+# 1. 掌控感与优越感机制 (Control & Superiority Dynamics)
+control_and_superiority:
+  core_principle: "信息差潜伏 + 情绪静默 + 确定性动作推进 = 顶级掌控感"
+  narrative_manifestation:
+    - "视点角色绝不在对白或心理描写中自夸、挑衅、冷笑或自我感动"
+    - "绝对优势通过'冷眼观察盲区'、'从容完成物理预备动作'、'一击达成既定事实'展现"
+    - "面对对手或他人的误判，视点角色顺水推舟、借力打力，甚至主动利用他人的轻视构建保护层"
+  toxin_filters:
+    - rule: "严禁冷笑、讥讽、龙王歪嘴等低质小白文外露神态"
+      substitute: "面容平静、眼神低垂、手部动作有条不紊或借助日常道具掩护视线"
+    - rule: "严禁在反派/配角面前长篇大论说教、宣讲、揭晓底牌"
+      substitute: "动作决断后直接切场，不给无意义口舌纠缠留空间"
+
+# 2. 信任递进六阶段 (Trust Progression Six Stages)
+trust_progression:
+  core_principle: "人际信任必须经过物理事件磨损与利害检验，严禁空穴来风式生死相托"
+  stages:
+    stage_1_boundary:
+      name: "常态防备与物理边界"
+      behavior: "保持安全物理距离，言语克制礼貌，暗中核对对方动机与身份盲区"
+    stage_2_minor_friction:
+      name: "日常琐碎事件磨合"
+      behavior: "共同经历低烈度外部事件或日常互动，通过细节验证对方性格与底线"
+    stage_3_unspoken_aid:
+      name: "不言语施援与事实留痕"
+      behavior: "一方在对方未察觉或不居功的前提下顺手提供实质帮助，不进行情感索取"
+    stage_4_tacit_coordination:
+      name: "默契接应与动作呼应"
+      behavior: "交锋或日常中无需言语指挥，通过眼神或下意识站位实现因果互补"
+    stage_5_vulnerability_leak:
+      name: "极限压力下的真实缝隙"
+      behavior: "在生死或重压关头袒露极微小的脆弱或往事碎片，且立即收敛"
+    stage_6_irreversible_alliance:
+      name: "不可逆的生死交付"
+      behavior: "基于过往扎实因果沉淀，做出无法回头的资源倾斜或性命托付"
+  toxin_filters:
+    - rule: "严禁见面数分钟即毫无缘由地产生好感、崇拜或肝胆相照"
+      substitute: "即使是天性善良之人，面对陌生人也必须具备基本的社会警惕与合理防御"
+
+# 3. 多层反应链机制 (Multi-Layer Reaction Chain)
+multi_layer_reaction_chain:
+  core_principle: "面对突发高能事实，现场角色的心理与生理反应必须按时间轴分层递进"
+  time_progression:
+    layer_1_sensory_0_5s:
+      name: "0.5秒感官停顿"
+      action: "视线聚焦、手头原有动作自然停滞（非僵死定格）、下意识身体微调避开威胁"
+      forbidden: "严禁倒吸凉气、瞳孔地震、喉结滚动、头皮发麻等解剖学神经反射"
+    layer_2_cognitive_1_2s:
+      name: "1~2秒认知利害重估"
+      action: "大脑迅速调取常识，试图寻找合理假说解释眼前异象，权衡自身处于何种危险"
+    layer_3_social_facade:
+      name: "社会化伪装与体面维持"
+      action: "为了自尊或掩护同伴，用日常大白话、冷幽默调侃或转移话题遮掩内心震动"
+    layer_4_concrete_action:
+      name: "实质性物理动作落地"
+      action: "果断采取下一步行动（如伸手抓起武器、撤向掩体、或是装作无事发生继续走）"
+  toxin_filters:
+    - rule: "严禁全场围观群众整齐划一惊呼、倒吸冷气或交头接耳议论排比"
+      substitute: "不同身份、性格的角色展现差异化反应（有人冷眼后撤，有人下意识掏手机，有人发愣）"
+
+# 4. 信息差潜伏与引爆律 (Information Gap Latency & Payoff)
+information_gap_latency:
+  core_principle: "信息差是张力的蓄水池；日常越不自爆，引爆时戏剧能量越强"
+  rules:
+    - "在日常社交与校园生活场景中，视点角色的特殊秘密必须严格潜伏在日常行为之下"
+    - "配角若因盲区产生误解，主角绝不主动纠正，而是顺着对方的认知边界行事"
+    - "只有当外部物理危机逼近、常规手段彻底失效时，才允许在关键一击中引爆信息差"

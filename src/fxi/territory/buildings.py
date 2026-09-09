@@ -31,9 +31,17 @@ class TerritoryBuildingManager:
             ensure_territory(cur, work_id, territory_id)
             cur.execute(
                 """
-                INSERT OR REPLACE INTO territory_buildings
+                INSERT INTO territory_buildings
                 (building_id, work_id, territory_id, building_proto_id, name, level, durability, status, assigned_workers, narrative_order)
                 VALUES (?, ?, ?, ?, ?, ?, 100.0, ?, 0, ?)
+                ON CONFLICT(work_id, territory_id, building_id) DO UPDATE SET
+                    building_proto_id = excluded.building_proto_id,
+                    name = excluded.name,
+                    level = excluded.level,
+                    durability = excluded.durability,
+                    status = excluded.status,
+                    assigned_workers = excluded.assigned_workers,
+                    narrative_order = excluded.narrative_order
                 """,
                 (building_id, work_id, territory_id, proto_id, name, level, status, narrative_order)
             )

@@ -1,0 +1,41 @@
+- mutation_id: mut_001_li_zang_transmigration_classroom
+  work_id: zhanshen_fanfic
+  trigger_chapter: 1
+  cause_event: 主角李葬穿越降临沧南二中高二教室课桌前，首次激活【万界休闲系统】
+  entity_id: character_81bfdd2941949c87
+  mutation_type: transmigration_activation
+  target_name: 穿越降临与系统激活
+  original_canon_chapter: null
+  payload:
+    location: 沧南二中高二教室
+    system_state: 刚激活
+    initial_points: 0
+  status: active
+  created_at: '2026-09-06T00:48:38.983631+00:00'
+- mutation_id: mut_001_lin_qiye_transfer_classroom
+  work_id: zhanshen_fanfic
+  trigger_chapter: 1
+  cause_event: 蒙眼少年林七夜转学进入沧南二中班级，手拄导盲杖被班主任引荐
+  entity_id: character_14f78297b3080907
+  mutation_type: interaction_divergence
+  target_name: 林七夜转学入班与李葬初见
+  original_canon_chapter: null
+  payload:
+    location: 沧南二中讲台与课桌
+    blindfold: true
+  status: active
+  created_at: '2026-09-06T00:48:38.993736+00:00'
+- mutation_id: mut_001_first_interaction_harvest
+  work_id: zhanshen_fanfic
+  trigger_chapter: 1
+  cause_event: 李葬在课桌与林七夜搭话，以神棍道士印堂发黑口吻收割第一笔负面情绪启动资金
+  entity_id: character_81bfdd2941949c87
+  mutation_type: ability_grant
+  target_name: 情绪值首收割
+  original_canon_chapter: null
+  payload:
+    target: 林七夜
+    first_harvest: 幽怨+3, 震惊+7
+  status: active
+  created_at: '2026-09-06T00:48:39.002735+00:00'
+

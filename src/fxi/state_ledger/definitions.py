@@ -13,3 +13,4 @@ class MetricDefinition(BaseModel):
     unit: str = "点"
     status_type: MetricStatus = MetricStatus.EXPLICIT
     allows_negative: bool = False
+    rule_version: str = "v1"

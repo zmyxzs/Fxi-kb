@@ -460,7 +460,60 @@ CREATE TABLE IF NOT EXISTS api_usage_logs (
     cost_cny REAL NOT NULL,
     created_at TEXT NOT NULL
 );
+
+-- 9. 章节索引与文风技法资产表 (彻底淘汰万行 YAML 与单体大 JSON)
+CREATE TABLE IF NOT EXISTS source_chapters (
+    work_id TEXT NOT NULL,
+    chapter_index INTEGER NOT NULL,
+    chapter_title TEXT NOT NULL,
+    char_count INTEGER NOT NULL DEFAULT 0,
+    sha256 TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    is_analyzed INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(work_id, chapter_index),
+    FOREIGN KEY(work_id) REFERENCES works(work_id)
+);
+
+CREATE TABLE IF NOT EXISTS style_rules (
+    rule_id TEXT PRIMARY KEY NOT NULL,
+    work_id TEXT NOT NULL,
+    canonical_key TEXT NOT NULL,
+    category TEXT NOT NULL,
+    scene_scope TEXT NOT NULL DEFAULT 'ALL',
+    instruction TEXT NOT NULL,
+    anti_pattern TEXT NOT NULL DEFAULT '',
+    support_chapters_count INTEGER NOT NULL DEFAULT 1,
+    supporting_chapters_json TEXT NOT NULL DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(work_id) REFERENCES works(work_id),
+    UNIQUE(work_id, canonical_key)
+);
+
+CREATE TABLE IF NOT EXISTS style_evidences (
+    evidence_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rule_id TEXT NOT NULL,
+    work_id TEXT NOT NULL,
+    chapter_index INTEGER NOT NULL,
+    quote TEXT NOT NULL,
+    offset_start INTEGER,
+    offset_end INTEGER,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(rule_id) REFERENCES style_rules(rule_id)
+);
+
+CREATE TABLE IF NOT EXISTS style_profiles (
+    work_id TEXT PRIMARY KEY NOT NULL,
+    author TEXT NOT NULL,
+    metrics_json TEXT NOT NULL DEFAULT '{}',
+    lexicon_features_json TEXT NOT NULL DEFAULT '{}',
+    fingerprint_path TEXT,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(work_id) REFERENCES works(work_id)
+);
 ```
+
 
 ---
 

@@ -6,6 +6,7 @@ from .attributes import AttributeCalculator
 from .combat_verifier import CombatVerifier
 from .passive_radar import PassiveThreatRadar
 from .projection import TieredParameterProjector
+from .scene_radar import SceneFocusRadar
 from .skills import SkillTreeEngine
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "TieredParameterProjector",
     "PassiveThreatRadar",
     "CombatVerifier",
+    "SceneFocusRadar",
 ]

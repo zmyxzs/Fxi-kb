@@ -1,0 +1,37 @@
+# 跨题材世界观术语与情境自适应适配器 (Worldview Adapter)
+# 作用: 动态根据当前作品/场景的世界观（worldview_genre）映射对应的情境与动作语法，禁止跨题材排斥
+
+version: "1.0.0"
+
+worldviews:
+  urban_superpower:
+    name: "都市高武/超凡"
+    dialogue_tone: "现代生活口语、市井烟火气、少年感、日常调侃与冷幽默"
+    social_context: "学校、老街、居民区、街道办、常识人情往来"
+    forbidden_tropes:
+      - "修仙长篇大论'道友莫怪'"
+      - "公文体制腔'五险一金责任担当'"
+      - "小白文'死瞎子、残废'等极端反常识恶毒辱骂"
+    grounding_props:
+      - "书包、校服、单车、旧钥匙、煎饼、便利店纸袋、水杯"
+
+  xianxia:
+    name: "仙侠/修真"
+    dialogue_tone: "古风白话、宗门利害权衡、长幼尊卑序位、克制机锋"
+    social_context: "宗门大殿、洞府、灵舟、山门集市、修士坊市"
+    forbidden_tropes:
+      - "现代都市网络梗与元词汇"
+      - "倒吸一口凉气此子恐怖如斯"
+      - "毫无根据的纳头便拜"
+    grounding_props:
+      - "玉简、飞剑、储物袋、道袍下摆、青石阶、茶盏"
+
+  historical_wuxia:
+    name: "传统武侠/历史"
+    dialogue_tone: "江湖切口、市井草莽、官民边界、重诺寡言"
+    social_context: "驿站、客栈、官道、茶棚、镖局"
+    forbidden_tropes:
+      - "玄幻毁天灭地战力崩塌"
+      - "现代散文诗化矫情"
+    grounding_props:
+      - "马缰、佩刀、粗瓷大碗、干粮、铜板、斗笠"

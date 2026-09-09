@@ -45,8 +45,26 @@ class FxiConfig(BaseModel):
         self.jieba_custom_dict_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def load_config(config_path: Optional[Path] = None, workspace_root: Optional[Path] = None) -> FxiConfig:
-    """加载配置并返回强类型 FxiConfig 实例"""
+def _resolve_workspace_path(workspace_root: Path, value: object, label: str) -> Path:
+    if not isinstance(value, str) or not value.strip():
+        raise ValidationError(f"{label} 必须是非空相对路径")
+    candidate = Path(value)
+    if candidate.is_absolute():
+        raise ValidationError(f"{label} 不允许使用绝对路径")
+    resolved = (workspace_root / candidate).resolve()
+    root = workspace_root.resolve()
+    if resolved == root or root not in resolved.parents:
+        raise ValidationError(f"{label} 越出 workspace_root")
+    return resolved
+
+
+def load_config(
+    config_path: Optional[Path] = None,
+    workspace_root: Optional[Path] = None,
+    *,
+    initialize: bool = False,
+) -> FxiConfig:
+    """加载配置；默认只解析，不创建目录或数据库。"""
     if workspace_root is None:
         env_root = os.getenv("FXI_WORKSPACE_ROOT")
         if env_root:
@@ -70,15 +88,19 @@ def load_config(config_path: Optional[Path] = None, workspace_root: Optional[Pat
     server_cfg = cfg_dict.get("server", {})
     context_cfg = cfg_dict.get("context", {})
 
-    data_dir = workspace_root / storage_cfg.get("data_dir", "data")
-    projects_dir = workspace_root / storage_cfg.get("projects_dir", "projects")
-    skills_dir = workspace_root / storage_cfg.get("skills_dir", "skills")
-    sources_dir = workspace_root / storage_cfg.get("sources_dir", "sources")
-    materials_dir = workspace_root / storage_cfg.get("materials_dir", "materials")
+    data_dir = _resolve_workspace_path(workspace_root, storage_cfg.get("data_dir", "data"), "data_dir")
+    projects_dir = _resolve_workspace_path(workspace_root, storage_cfg.get("projects_dir", "projects"), "projects_dir")
+    skills_dir = _resolve_workspace_path(workspace_root, storage_cfg.get("skills_dir", "skills"), "skills_dir")
+    sources_dir = _resolve_workspace_path(workspace_root, storage_cfg.get("sources_dir", "sources"), "sources_dir")
+    materials_dir = _resolve_workspace_path(workspace_root, storage_cfg.get("materials_dir", "materials"), "materials_dir")
 
-    sqlite_path = workspace_root / storage_cfg.get("sqlite_path", "data/manifest.sqlite")
-    cache_db_path = workspace_root / storage_cfg.get("cache_db_path", "data/cache.sqlite")
-    jieba_custom_dict_path = workspace_root / storage_cfg.get("jieba_custom_dict_path", "data/project_lexicon.txt")
+    sqlite_path = _resolve_workspace_path(workspace_root, storage_cfg.get("sqlite_path", "data/manifest.sqlite"), "sqlite_path")
+    cache_db_path = _resolve_workspace_path(workspace_root, storage_cfg.get("cache_db_path", "data/cache.sqlite"), "cache_db_path")
+    jieba_custom_dict_path = _resolve_workspace_path(
+        workspace_root,
+        storage_cfg.get("jieba_custom_dict_path", "data/project_lexicon.txt"),
+        "jieba_custom_dict_path",
+    )
 
     config = FxiConfig(
         workspace_root=workspace_root,
@@ -93,5 +115,6 @@ def load_config(config_path: Optional[Path] = None, workspace_root: Optional[Pat
         server=ServerConfig(**server_cfg),
         context=ContextConfig(**context_cfg),
     )
-    config.ensure_directories()
+    if initialize:
+        config.ensure_directories()
     return config

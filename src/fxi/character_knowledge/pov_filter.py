@@ -31,7 +31,7 @@ class POVFilter:
                     filtered_claims.append(c)
             sanitized["claims"] = filtered_claims
 
-        # 2. 过滤主角隐藏底牌
+        # 2. 过滤受保护实体的隐藏信息
         if "hidden_cards" in sanitized and isinstance(sanitized["hidden_cards"], list):
             visible_cards = []
             for card in sanitized["hidden_cards"]:
