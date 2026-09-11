@@ -1,6 +1,9 @@
 # 15 模型管理与统一大模型网关（Model Gateway，目标设计）
 
+> 状态：`CURRENT + PLANNED`
+
 > 当前实现已提供统一 chat gateway、缓存、结构化修复、多密钥轮换，以及受鉴权的 `/v1/models/health`、`/v1/models/chat` 外部代理；embedding provider、离线队列、跨 provider 自动 failover 和提示词注册表仍属于演进目标，实际状态以 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) 为准。
+> 2026-09-11 契约补充：`/v1/models/chat` 会在供应商真实返回 token usage 时返回受限的 `usage`、`usage_known=true` 和 `finish_reason`；缺失或非法 usage 时只返回 `usage_known=false`，不把网关内部估算暴露为真实用量。
 
 ## 1. 架构定位与职责边界
 
@@ -210,6 +213,19 @@ extracted_claims = await gateway.extract(
 - 支持查询：`kb cost --project fanfic-a`；
 - 输出详报：本月知识库导入分析共消耗多少 Token、折合人民币多少元、缓存命中率是多少。彻底打破使用成本的黑盒。
 
+模型代理的跨项目响应只允许以下审计字段：
+
+```json
+{
+  "content": "...",
+  "usage": {"prompt_tokens": 12, "completion_tokens": 8, "total_tokens": 20},
+  "usage_known": true,
+  "finish_reason": "stop"
+}
+```
+
+`usage` 只接受供应商返回的非负整数计数，并由网关丢弃嵌套计费/凭据字段。供应商没有返回可验证计数时，`usage` 不出现在 API 响应中，`usage_known` 为 `false`；`CostTracker` 可以继续使用字符长度估算做内部趋势记账，但该估算不能用于 Studio 的有界预算结算。
+
 ---
 
 ## 6. 提示词模板外部化（Prompt Registry）
@@ -256,7 +272,7 @@ prompts/
 外部写作端与 Fxi 仍保持领域解耦，但模型基础设施已统一：
 
 1. 外部写作系统可继续调用上下文、审查和状态接口，正文提示词、预算、调用记录与输出校验仍由外部系统负责；
-2. `novel-Studio` 默认通过自己的 `FxiClient` 调用 `POST /v1/models/health` 和 `POST /v1/models/chat`；接口要求 `writer` 或 `admin` actor；
+2. `novel-Studio` 默认通过自己的 `FxiClient` 调用 `POST /v1/models/health` 和 `POST /v1/models/chat`；接口要求 `writer` 或 `admin` actor；请求只携带 task/model（可选）、reasoning_effort、temperature、max_tokens 与提示词等生成参数；
 3. Fxi 进程的 `app.state.model_gateway` 是 provider 配置、密钥池轮询游标和冷却状态的单一所有者，实际路由来自 `config/models.yaml`；
 4. Studio 的 `FXI_API_TOKEN` 只用于 actor 鉴权；Agnes、Gemini 等 provider API key 只存于 Fxi 的工作区 `.env` 或进程环境，REST 请求不接受密钥字段；
 5. Studio 只有在显式设置 `use_fxi_gateway=false` 时才进入应急直连模式。Fxi 代理失败不会自动直连回退，避免绕过统一限流与审计状态。

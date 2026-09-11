@@ -2,7 +2,9 @@
 
 本文是 Fxi 的 **as-built 文档**：描述当前工作区代码实际提供的能力、调用前置条件、失败状态和已知缺口。它补充而不替代 `dev-docs/01`～`07` 的设计文档；当设计蓝图与代码行为不一致时，以代码、测试和本文件的“当前实现”章节为准。
 
-核对依据：`src/fxi/`、`config/`、`pyproject.toml` 以及本次实际执行的 CLI 帮助命令。本文不把模型生成结果、数据库现有内容或设计目标当作已实现功能。
+状态：CURRENT（as-built）；最近核对日期：2026-09-12。
+
+核对依据：`src/fxi/`、`config/`、`pyproject.toml` 以及登记的 CLI 帮助核对命令。本文不把模型生成结果、数据库现有内容或设计目标当作已实现功能，也不据此宣称任何外部集成已验证。
 
 ## 1. 系统定位
 
@@ -66,13 +68,15 @@ python -m fxi.cli.main --help
 
 `FXI_WORKSPACE_ROOT` 可以覆盖工作区根目录；未设置时，代码按安装包位置推导项目根目录。配置加载会创建上述运行目录，但不会自动创建作品、来源或审批数据。
 
+测试与静态检查的可丢弃缓存统一位于 `tests/.cache/`：pytest 为 `tests/.cache/pytest`，ruff 为 `tests/.cache/ruff`，mypy 为 `tests/.cache/mypy`；标准命令使用 Python `-B` 选项避免生成分散的字节码目录，既有字节码已归档到 `tests/.cache/pycache/working-tree`。这些缓存不属于知识库、来源或业务运行数据。
+
 启动 API 的推荐方式：
 
 ```powershell
 python -m uvicorn fxi.api.server:create_app --factory --host 127.0.0.1 --port 8765
 ```
 
-`create_app()` 会初始化配置、SQLite 客户端、作品/来源注册表、CORS 和 v1/v2 路由。`run_server()` 也提供同样的 Uvicorn 启动逻辑，但 `server.py` 没有独立的 `__main__` 命令分支。
+`create_app()` 会初始化配置、SQLite 客户端、作品/来源注册表、CORS 和 v1/v2/v3 路由。`run_server()` 也提供同样的 Uvicorn 启动逻辑，但 `server.py` 没有独立的 `__main__` 命令分支。
 
 ### 2.3 API 认证配置
 
@@ -171,7 +175,7 @@ python -m fxi.cli.main project import <file.txt> --work-id <work-id> --title "<t
 
 目录导入只接受 `.md` 和 `.txt` 文件。文件名必须包含章节序号，序号不能重复、不能缺失且最终必须从 `1` 连续排列；`--limit` 会在排序后截取前 N 章。内容以严格编码规则读取，规范化文本后创建不可变来源对象，随后生成兼容目录、场景切片和 FTS5 记录。
 
-导入会把 `source_id` 与同名 `work_id` 写入 `work_sources`。当前公开 CLI 没有“把已有来源绑定到另一个作品”的独立命令；需要跨作品复用来源时，必须显式注册 `work_sources`，不能依赖目录名或 `_fanfic` 命名猜测。
+导入会把 `source_id` 与同名 `work_id` 写入 `work_sources`。v3 提供独立的 `source-bind`（提交来源绑定载荷）和 `source-attach`（由运行时托管外部文本文件/目录，并一次完成绑定与不可变快照）命令；跨作品复用来源时仍必须显式绑定，不能依赖目录名或 `_fanfic` 命名猜测。
 
 ### 4.2 不可变来源与证据引用
 
@@ -249,6 +253,8 @@ sources/objects/<source_id>/<source_version>/
 
 查询族也可通过 `query` 进入；作品和抽取族通过 `project` 进入；运维命令通过 `ops` 进入。快捷命令与嵌套命令可能显示不同命令名，但共享实现。
 
+v3 入口通过 `v3` 命令族提供版本化 HTTP 客户端操作，包括 `project`、`source-bind`、`source-attach`、`source-snapshot`、候选、评测、决策、晋升、写作审核/提议/批准/提交、投影重建、`context`、`query`、`health` 和 `readiness`。`v3 runtime` 提供本地服务的 `start`、`status`、`stop`；`start` 在服务已就绪时复用已有进程，`status` 不启动服务。
+
 ### 6.2 作品与抽取命令
 
 | 命令 | 关键参数/事实 |
@@ -277,6 +283,15 @@ python -m fxi.cli.main query items --work-id <work-id> --history
 python -m fxi.cli.main query skills --work-id <work-id>
 python -m fxi.cli.main ops backup
 python -m fxi.cli.main ops cost
+```
+
+v3 帮助核对命令：
+
+```powershell
+python -m fxi.cli.main v3 --help
+python -m fxi.cli.main v3 source-bind --help
+python -m fxi.cli.main v3 source-attach --help
+python -m fxi.cli.main v3 runtime --help
 ```
 
 `ops cost` 展示 `api_usage_logs` 汇总。当前网关用 `len(prompt)//2` 和 `len(output)//2` 估算 token，再按固定公式估算人民币成本；这不是 provider 返回的真实 usage 或账单。
@@ -367,6 +382,10 @@ v2 `writing/review` 当前固定执行：
 即使请求没有列出 `semantic_review`，路由也会自动追加一次语义检查。因此在默认 `create_app()` 没有注入语义审查器的情况下，常规 v2 review 通常不能得到 `PASSED`；随后 proposal 会因为没有通过的 review 被拒绝。这是当前真实可用性限制，不是调用方参数错误。
 
 v2 approval 的 `rollback` action 当前明确返回 `409 UNSUPPORTED_APPROVAL_ACTION`，不能据此启动回滚。回滚领域模块存在，但没有接入 v2 审批/提交 API。
+
+### 7.5 v3：版本化公共门面
+
+v3 路由由 `router_v3` 注册在 `/v3` 下；服务端同时保留 v1、v2 和 v3。v3 CLI 通过 HTTP 公共边界调用这些路由，不在 CLI 内复制服务层。当前公开操作覆盖能力查询、项目、来源绑定/附加/快照、候选与生命周期操作、上下文、查询、投影重建，以及 `/v3/health` 和 `/v3/readiness`。具体请求字段、角色、版本/hash/幂等约束以 v3 contracts 和运行时返回为准；本手册不将外部模型或 Studio 集成视为已验证。
 
 ## 8. 模型网关与生成质量边界
 

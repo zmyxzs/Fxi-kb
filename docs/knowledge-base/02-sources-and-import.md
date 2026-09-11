@@ -1,5 +1,6 @@
 # 02 原始资料、作品导入与文本解析
 
+> 状态：`CURRENT + PLANNED`
 > **实现状态提示（2026-09）**：当前已落地 txt/md 解析、来源版本对象、哈希校验、场景切片和 FTS 写入；向量任务队列以及“删除数据库后 100% 重建”尚未形成可调用闭环，实际限制见 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md)。
 
 ## 这一部分用来做什么

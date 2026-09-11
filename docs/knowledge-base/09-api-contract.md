@@ -1,5 +1,6 @@
 # 知识库 API 契约 v1
 
+> 状态：`CURRENT + PLANNED`
 ## 1. 定位
 
 本文定义知识库对 `novel-Skill`、CLI 和未来本地扩展工具暴露的稳定接口规范。当前核心实现以本地 Python API 和 CLI 优先；本地 HTTP API 作为轻量适配层，不改变底层的领域语义与流控逻辑。

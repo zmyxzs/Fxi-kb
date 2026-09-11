@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "project_id": "fxi",
+  "root": ".",
+  "source_roots": [
+    "src",
+    "tests",
+    "scripts"
+  ],
+  "document_roots": [
+    "README.md",
+    "docs",
+    "dev-docs"
+  ],
+  "exclude": [
+    ".git",
+    ".codex",
+    ".venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    "*.pyc",
+    "*.pyo",
+    "*.egg-info",
+    "*.json",
+    "*.yaml",
+    "*.yml",
+    "*.toml",
+    "*.md",
+    "*.txt",
+    "*.sqlite",
+    "*.db",
+    "*.log"
+  ],
+  "entrypoints": [
+    {
+      "path": "src/fxi/cli/main.py",
+      "symbol": "app",
+      "kind": "cli"
+    },
+    {
+      "path": "src/fxi/api/server.py",
+      "symbol": "create_app",
+      "kind": "module"
+    },
+    {
+      "path": "scripts/migrate_legacy_to_kb.py",
+      "symbol": "main",
+      "kind": "generator"
+    }
+  ],
+  "test_commands": [
+    {
+      "name": "unit",
+      "command": [
+        "python",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "cwd": "."
+    },
+    {
+      "name": "cli-help",
+      "command": [
+        "python",
+        "-m",
+        "fxi.cli.main",
+        "--help"
+      ],
+      "cwd": "."
+    }
+  ],
+  "document_mappings": [
+    {
+      "source_globs": [
+        "src/**/*.py",
+        "tests/**/*.py",
+        "scripts/**/*.py"
+      ],
+      "documents": [
+        "dev-docs/08-current-implementation-and-operations.md",
+        "docs/knowledge-base/16-current-implementation-status-and-boundaries.md",
+        "README.md"
+      ],
+      "reason": "Fxi Python mechanisms and tests are mapped to current implementation documentation; knowledge assets and runtime data stay outside source_roots."
+    }
+  ],
+  "parser": {
+    "language": "python",
+    "parser_version": "repo-index-python-1",
+    "extensions": [
+      ".py"
+    ],
+    "capabilities": [
+      "ast",
+      "imports",
+      "calls",
+      "inherits"
+    ]
+  },
+  "index": {
+    "directory": ".codex/index",
+    "storage": "sqlite"
+  },
+  "limits": {
+    "max_file_bytes": 4194304,
+    "max_changed_paths": 1024,
+    "max_retries": 2
+  }
+}

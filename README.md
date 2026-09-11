@@ -1,5 +1,7 @@
 # Fxi 知识库与创作底座
 
+> 状态：`CURRENT + PLANNED`
+
 Fxi 是一个本地优先的 Python 知识库与动态世界状态中心，为长篇写作提供作品隔离、来源版本、结构化实体、时空因果、动态状态、角色认知、中文全文检索和写作审核接口。小说正文生成不是 Fxi 的内置职责；正文生成和部分语义审核通过统一模型网关或外部写作系统协作完成。
 
 ## 先确认当前状态
@@ -59,6 +61,14 @@ Authorization: Bearer <token>
 
 API 路由按两层理解：v1 主要用于查询和兼容检查；v2 将来源版本、知识版本、正文哈希、审核、审批、幂等键和 CAS 提交绑定在一起。版本化写作提交应按“source snapshot → writing context → writing review → proposal → approval → commit”顺序执行，具体请求体以 [API 契约](docs/knowledge-base/09-api-contract.md) 和 [当前实现手册](dev-docs/08-current-implementation-and-operations.md) 为准。
 
+### v3 CLI/API 与本地 runtime
+
+当前 v3 CLI 入口为 `python -m fxi.cli.main v3`，可用命令包括 `capabilities`、`project`、`source-bind`、`source-attach`、`source-snapshot`、`candidate`、`evaluate`、`decide`、`promote`、`context`、`query`、`review`、`proposal`、`approve`、`commit`、`projection-rebuild`、`health` 和 `readiness`；参数以 `v3 --help` 为准。外部文件或目录应优先使用 `source-attach`，由 Fxi 校验并托管到受控来源目录，再完成 binding 与不可变 snapshot；`source-bind` 仅接受受控 `sources_dir` 下的相对路径。具有副作用的 v3 操作需要幂等键，读操作不要求幂等键。
+
+v3 HTTP 路由挂载在 `/v3`，覆盖项目、来源 binding/attachment/snapshot/active/read（以及兼容的 `windows`）、候选、评测、决策、晋升、context、query、review、proposal、approval、commit、投影重建、health 和 readiness。缺少服务能力、认证、作用域、证据或审批时应保留真实错误并停止，不得绕过 v3 边界。
+
+本地运行时通过 `python -m fxi.cli.main v3 runtime start|status|stop` 管理；`start` 在服务已就绪时复用已有进程，`status` 不启动服务，`stop` 请求停止运行时清单记录的服务。详细调用顺序以 [17 系统调用说明](docs/knowledge-base/17-system-usage-runbook.md) 为准。
+
 ## 配置与数据目录
 
 默认配置位于 [config/config.yaml](config/config.yaml)，模型路由位于 [config/models.yaml](config/models.yaml)。关键默认路径为：
@@ -82,6 +92,7 @@ materials/                 # 候选素材等创作数据
 - [当前实现状态与边界](docs/knowledge-base/16-current-implementation-status-and-boundaries.md)：面向使用者的可用性判断、冲突来源和验收清单。
 - [开发文档总索引](dev-docs/README.md)：工程设计、模块职责、数据契约、测试和实施路线。
 - [当前实现手册与运维流程](dev-docs/08-current-implementation-and-operations.md)：安装、认证、CLI/API、SQLite、备份、重建、故障排查和维护规则。
+- [17 系统调用说明](docs/knowledge-base/17-system-usage-runbook.md)：当前 v3 CLI/API、source-bind/source-attach、runtime、证据与审批边界。
 - [数据结构与 SQLite DDL](dev-docs/05-data-schema-and-sqlite-ddl.md)：持久化契约和迁移注意事项。
 - [工程标准与测试](dev-docs/06-engineering-standards-and-testing.md)：错误处理、验证和回归测试要求。
 

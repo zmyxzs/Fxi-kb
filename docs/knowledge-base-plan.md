@@ -1,6 +1,8 @@
 # 自用写作与同人资料知识库规划
 
-本文件是全库兼容入口。系统整体规划与架构方案已全面升级，并按问题域完成模块化拆分。
+> 状态：`PLANNED`
+
+本文件是全库兼容入口。系统整体规划与架构方案已全面升级，并按问题域完成模块化拆分。本文件保持 `PLANNED`，不是当前运行状态证明；当前实现与公开调用入口以 [16 当前实现状态与边界](knowledge-base/16-current-implementation-status-and-boundaries.md) 和 [17 系统调用说明](knowledge-base/17-system-usage-runbook.md) 为准。
 
 > 本文件和下方专题主要是规划/设计入口，不是当前运行状态证明。使用前请先阅读 [当前实现状态与边界](knowledge-base/16-current-implementation-status-and-boundaries.md)；工程启动、认证、API、CLI、备份和重建以 [当前实现手册](../dev-docs/08-current-implementation-and-operations.md) 为准。
 
@@ -48,3 +50,4 @@
 - [14a API 扩展备注：动态状态、风格反馈与生命周期](knowledge-base/14a-api-extension-notes.md)
 - [15 模型管理与统一大模型网关](knowledge-base/15-model-management-and-llm-gateway.md)
 - [16 当前实现状态、功能可用性与边界](knowledge-base/16-current-implementation-status-and-boundaries.md)
+- [17 系统调用说明：v3 CLI/API、来源绑定与本地 runtime](knowledge-base/17-system-usage-runbook.md)

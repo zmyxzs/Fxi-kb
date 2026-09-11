@@ -1,5 +1,6 @@
 # 知识库统一架构与文档总纲
 
+> 状态：`CURRENT + PLANNED`
 > 本文是知识库全系统的最高权威设计总纲。各专题文档负责展开细节，但不得重新定义与本文冲突的模块边界、数据生命周期、真理源归属或写入权限。
 >
 > **实现状态声明（2026-09）**：本文描述目标架构和长期约束，不等同于当前已上线能力。embedding/向量检索、离线队列、自动 failover、提示词外置和任意数据库全量重建目前仍是规划项；实际可用性以 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md) 与 [dev-docs/08-current-implementation-and-operations.md](../../dev-docs/08-current-implementation-and-operations.md) 为准。

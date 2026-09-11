@@ -1,10 +1,14 @@
 # 自用写作与同人知识库规划与总索引
 
+> 状态：`CURRENT + PLANNED`
+
 这是知识库规划与技术架构的统一入口。本文档维护全局索引、系统核心原则与阅读导航。详细规划按“它是什么、用于什么、如何关联、如何演进”进行彻底的问题域解耦。
 
 > **现实校准入口**：本目录的 `00`～`15` 主要描述目标模型、设计原则和演进方案。要判断某项能力当前是否真正可用、需要哪些数据前置条件，以及哪些设计尚未落地，请优先阅读 [16-current-implementation-status-and-boundaries.md](16-current-implementation-status-and-boundaries.md)，并结合 [dev-docs/08-current-implementation-and-operations.md](../../dev-docs/08-current-implementation-and-operations.md)。当设计蓝图与代码行为不一致时，以当前实现文档、代码和实际验证结果为准。
 
 > **禁止误读**：下方“核心设计总原则”和专题中的“支持/必须”是目标约束，不是功能已上线的证明。当前 embedding、向量/RRF、离线队列、自动 failover、rollback approval 和任意全量 rebuild 均以“未实现/条件可用”处理。
+
+> **入口优先级**：本总索引和专题包含规划内容；当前可调用入口、source-bind/source-attach、v3 API、runtime 及其边界以 [16 当前实现状态](16-current-implementation-status-and-boundaries.md) 与 [17 系统调用说明](17-system-usage-runbook.md) 为准。`knowledge-base-plan.md` 保持 `PLANNED`，不作为实现证明。
 
 ---
 

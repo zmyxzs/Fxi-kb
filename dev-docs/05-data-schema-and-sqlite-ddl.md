@@ -1,5 +1,7 @@
 # 05 数据契约、YAML 规范与 SQLite DDL
 
+> 状态：`PLANNED`
+
 ---
 
 ## 1. 纯文本单真理源格式规范（Text-First Contracts）

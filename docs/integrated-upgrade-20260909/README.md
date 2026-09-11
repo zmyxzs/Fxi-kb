@@ -1,15 +1,20 @@
 # Fxi 集成升级计划入口
 
-状态：PROPOSED / 待确认实施；2026-09-10。本仓仅保存导航，避免两份契约和派单清单漂移；完整计划位于并列Studio仓库。
+> 状态：`CURRENT` + `PLANNED`
+>
+> - `CURRENT`：本文件只保存集成升级导航与 Fxi 侧范围说明；当前代码、测试和公开入口的现实边界以本仓现行文档为准。
+> - `PLANNED`：被导航的集成升级主计划仍为 `PROPOSED` / 待确认实施（核对日期：2026-09-10），不代表跨仓真实闭环已经完成。
 
-- [统一入口](../../../novel-Studio/docs/integrated-upgrade-20260909/README.md)
-- [实施主计划](../../../novel-Studio/.codex/plan/integrated-upgrade-20260909.md)
-- [公共架构与C1—C9](../../../novel-Studio/docs/integrated-upgrade-20260909/02-contracts.md)
-- [Fxi W10—W21](../../../novel-Studio/docs/integrated-upgrade-20260909/03-fxi-work-packages.md)
-- [高级知识包W22—W27与模型/扩展包](../../../novel-Studio/docs/integrated-upgrade-20260909/06-advanced-work-packages.md)
-- [真实闭环验收](../../../novel-Studio/docs/integrated-upgrade-20260909/07-acceptance.md)
-- [两个主agent与Luna子任务提示词](../../../novel-Studio/docs/integrated-upgrade-20260909/08-agent-dispatch.md)
-- [50包机器分派表](../../../novel-Studio/docs/integrated-upgrade-20260909/work-packages.json)
+以下条目均为仓库外 sibling 工作区 `novel-Studio` 的证据引用，不是本仓可审计的 Markdown 链接。本仓无法独立审计这些文件的内容、版本、提交或当前状态；这里不臆造 URL 或提交号。如需核对，必须取得指定文件及其明确版本。
+
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/README.md`（统一入口）
+- 外部工作区证据：`novel-Studio/.codex/plan/integrated-upgrade-20260909.md`（实施主计划）
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/02-contracts.md`（公共架构与 C1—C9）
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/03-fxi-work-packages.md`（Fxi W10—W21）
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/06-advanced-work-packages.md`（高级知识包 W22—W27 与模型/扩展包）
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/07-acceptance.md`（真实闭环验收）
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/08-agent-dispatch.md`（两个主 agent 与 Luna 子任务提示词）
+- 外部工作区证据：`novel-Studio/docs/integrated-upgrade-20260909/work-packages.json`（50 包机器分派表）
 
 Fxi负责来源、证据、候选治理、采纳、批准知识版本、公开查询和原子知识提交；已有SQLite持久化组合根/OAG-lite/Wiki先验证复用，不重新建设。W26属于Studio，不能因出现在高级知识包文件中就在本仓实现。
 
